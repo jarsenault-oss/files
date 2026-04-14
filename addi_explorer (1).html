@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addi's AdTech Solution Explorer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0c1e;color:#e8eaf6;min-height:100vh;overflow-x:hidden}
+#home{padding:0 0 60px}
+.hero{background:#0d1235;padding:48px 40px 40px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.de-label{font-size:11px;letter-spacing:3px;color:#5b8def;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+.hero-row{display:flex;align-items:center;gap:20px;margin-bottom:16px}
+.addi-circle{width:72px;height:72px;border-radius:50%;background:#1e3a8a;display:flex;align-items:center;justify-content:center;font-size:34px;border:2px solid rgba(77,149,255,0.4);flex-shrink:0}
+.hero-title{font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.15}
+.hero-title span{color:#4d94ff}
+.addi-bubble{background:rgba(37,99,235,0.15);border:1px solid rgba(77,149,255,0.25);border-radius:12px;padding:14px 18px;font-size:13px;color:#b8ccf0;line-height:1.6;max-width:640px;margin-top:16px}
+.addi-bubble b{color:#7db3ff}
+.filter-bar{padding:24px 40px 0;display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#8096be;border-radius:20px;padding:7px 18px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.filter-btn:hover{background:rgba(255,255,255,0.08);color:#c0d4f0}
+.filter-btn.active{background:#1e3a8a;border-color:#2563eb;color:#93c5fd}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:24px 40px}
+.use-case-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:22px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.use-case-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.use-case-card.netacuity::before{background:#2563eb}
+.use-case-card.nodify::before{background:#7c3aed}
+.use-case-card.matchbook::before{background:#047857}
+.use-case-card:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.18);transform:translateY(-2px)}
+.card-product{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-product.netacuity{color:#60a5fa}
+.card-product.nodify{color:#c084fc}
+.card-product.matchbook{color:#34d399}
+.card-icon-sm{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.card-title{font-size:16px;font-weight:700;margin-bottom:8px;color:#e8eaf6;line-height:1.3}
+.card-desc{font-size:13px;color:#7a90b8;line-height:1.55;margin-bottom:14px}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:10px;padding:3px 9px;border-radius:10px;font-weight:600}
+.tag.na{background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.3)}
+.tag.no{background:rgba(124,58,237,0.2);color:#c084fc;border:1px solid rgba(124,58,237,0.3)}
+.tag.mb{background:rgba(4,120,87,0.2);color:#34d399;border:1px solid rgba(4,120,87,0.3)}
+.card-arrow{position:absolute;bottom:18px;right:18px;font-size:18px;color:rgba(255,255,255,0.2);transition:all .2s}
+.use-case-card:hover .card-arrow{color:rgba(255,255,255,0.5)}
+#detail{display:none;min-height:100vh;padding:0 0 80px}
+.detail-header{padding:32px 40px 24px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.back-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#8096be;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;margin-bottom:20px;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.back-btn:hover{background:rgba(255,255,255,0.12);color:#e8eaf6}
+.detail-product-badge{display:inline-flex;align-items:center;gap:8px;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.detail-product-badge.netacuity{background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.35)}
+.detail-product-badge.nodify{background:rgba(124,58,237,0.2);color:#c084fc;border:1px solid rgba(124,58,237,0.35)}
+.detail-product-badge.matchbook{background:rgba(4,120,87,0.2);color:#34d399;border:1px solid rgba(4,120,87,0.35)}
+.detail-title{font-size:clamp(22px,3.5vw,32px);font-weight:800;margin-bottom:10px;line-height:1.2}
+.detail-lead{font-size:15px;color:#8096be;line-height:1.7;max-width:680px}
+.detail-body{padding:32px 40px;display:grid;grid-template-columns:1fr 340px;gap:32px}
+.section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#4d6fa8;margin-bottom:14px}
+.pain-card{background:rgba(37,99,235,0.1);border:1px solid rgba(77,149,255,0.2);border-radius:12px;padding:20px;margin-bottom:24px}
+.pain-card .pain-title{font-size:13px;font-weight:700;color:#7db3ff;margin-bottom:8px}
+.pain-card p{font-size:13px;color:#b0c4e8;line-height:1.65}
+.steps{display:flex;flex-direction:column;gap:0;margin-bottom:28px}
+.step{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+.step:last-child{border-bottom:none}
+.step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;margin-top:2px}
+.step-num.netacuity{background:rgba(37,99,235,0.3);color:#93c5fd;border:1px solid rgba(37,99,235,0.5)}
+.step-num.nodify{background:rgba(124,58,237,0.3);color:#c084fc;border:1px solid rgba(124,58,237,0.5)}
+.step-num.matchbook{background:rgba(4,120,87,0.3);color:#34d399;border:1px solid rgba(4,120,87,0.5)}
+.step-content h4{font-size:14px;font-weight:700;margin-bottom:5px;color:#d0dcf4}
+.step-content p{font-size:13px;color:#7a90b8;line-height:1.6}
+.outcomes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px}
+.outcome-chip{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:14px}
+.outcome-chip .val{font-size:22px;font-weight:800;margin-bottom:3px}
+.outcome-chip .lbl{font-size:11px;color:#5a7099;font-weight:600}
+.outcome-chip.netacuity .val{color:#60a5fa}
+.outcome-chip.nodify .val{color:#c084fc}
+.outcome-chip.matchbook .val{color:#34d399}
+.sidebar-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:20px;margin-bottom:16px}
+.sidebar-card h3{font-size:13px;font-weight:700;color:#d0dcf4;margin-bottom:14px}
+.db-list{display:flex;flex-direction:column;gap:8px}
+.db-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.07)}
+.db-fc{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;flex-shrink:0;margin-top:2px}
+.db-fc.na{background:rgba(37,99,235,0.25);color:#93c5fd}
+.db-fc.no{background:rgba(124,58,237,0.25);color:#c084fc}
+.db-fc.mb{background:rgba(4,120,87,0.25);color:#34d399}
+.db-name{font-size:13px;color:#c0d0ec;font-weight:600}
+.db-desc{font-size:11px;color:#5a7099;margin-top:1px}
+.related-list{display:flex;flex-direction:column;gap:8px}
+.related-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.07);transition:all .15s;background:rgba(255,255,255,0.03)}
+.related-item:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
+.related-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.related-dot.netacuity{background:#2563eb}
+.related-dot.nodify{background:#7c3aed}
+.related-dot.matchbook{background:#047857}
+.related-item span{font-size:12px;color:#8096be}
+.related-item:hover span{color:#c0d0ec}
+.addi-result{background:rgba(37,99,235,0.1);border:1px solid rgba(77,149,255,0.2);border-left:3px solid #2563eb;border-radius:0 10px 10px 0;padding:16px 18px;margin-top:16px}
+.addi-result p{font-size:13px;color:#b0c4e8;line-height:1.65;font-style:italic}
+.addi-result .addi-sig{font-size:11px;color:#5b8def;font-weight:700;margin-top:8px;font-style:normal}
+.flow-diagram{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:16px 0}
+.flow-node{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;color:#c0d0ec;text-align:center}
+.flow-node.hi-netacuity{background:rgba(37,99,235,0.25);border-color:#2563eb;color:#93c5fd}
+.flow-node.hi-nodify{background:rgba(124,58,237,0.25);border-color:#7c3aed;color:#c084fc}
+.flow-node.hi-matchbook{background:rgba(4,120,87,0.25);border-color:#047857;color:#34d399}
+.flow-arrow{color:#3a4a6a;font-size:18px;padding:0 6px;flex-shrink:0}
+@media(max-width:900px){.detail-body{grid-template-columns:1fr}}
+@media(max-width:640px){.hero,.filter-bar,.cards-grid,.detail-header,.detail-body{padding-left:20px;padding-right:20px}.outcomes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="home">
+  <div class="hero">
+    <div class="de-label">digital element · solution explorer</div>
+    <div class="hero-row">
+      <div class="addi-circle">&#128105;&#8205;&#128188;</div>
+      <div>
+        <div class="hero-title">Hi, I'm <span>Addi.</span><br>What's my challenge today?</div>
+      </div>
+    </div>
+    <div class="addi-bubble">
+      I run programmatic campaigns for major brands and I'm always looking for better data to <b>target smarter, block fraud, and reach audiences everywhere.</b> Pick a challenge below and I'll show you exactly how Digital Element solves it.
+    </div>
+  </div>
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-btn active" data-filter="all">All Use Cases</button>
+    <button class="filter-btn" data-filter="netacuity">NetAcuity</button>
+    <button class="filter-btn" data-filter="nodify">Nodify IPC</button>
+    <button class="filter-btn" data-filter="matchbook">Matchbook</button>
+  </div>
+  <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<div id="detail"></div>
+
+<script>
+var USE_CASES = [
+  {
+    id: "fraud-ivt",
+    product: "nodify",
+    title: "Block Ad Fraud & IVT",
+    desc: "Identify and suppress VPN, proxy, Tor, and datacenter traffic before it wastes your budget.",
+    tags: ["IVT Prevention","Fraud Filtering","Brand Safety"],
+    tagType: "no",
+    icon: "Shield",
+    pain: "My campaign metrics look great — high CTR, tons of impressions — but my client's sales haven't moved. A post-campaign audit showed 38% of traffic came from datacenter IPs and anonymizing proxies. I'm burning budget on non-humans.",
+    lead: "Nodify IPC identifies and classifies every IP touching your campaigns — VPN, proxy, Tor exit node, darknet, or hosting — so you can filter invalid traffic before it ever gets an impression.",
+    steps: [
+      {title:"Classify every IP at bid time", body:"Nodify categorizes incoming IPs as VPN, Proxy, Darknet, Corporate, Hosting, or Consumer-Privacy — updated daily. At pre-bid you know exactly what type of traffic you are looking at."},
+      {title:"Apply the IPC behavioral score", body:"The IP Characteristics score (1-5) layers behavioral context: how many unique devices and locations have been seen on this IP in the last 5 weeks. Score of 5 means high device churn, low stability — likely non-human."},
+      {title:"Flag residential proxies separately", body:"Residential=yes signals a real ISP subscriber may be present. Residential=no from a datacenter is almost certainly bot traffic — suppress it."},
+      {title:"Integrate via daily node delivery file", body:"Nodify outputs a daily flat file or API feed that plugs into your DSP pre-bid logic, DMP, or ad server. No latency impact on your bidding stack."}
+    ],
+    outcomes: [
+      {val:"Daily", lbl:"Update frequency"},
+      {val:"10+", lbl:"Proxy categories"},
+      {val:"1-5", lbl:"IPC risk score"},
+      {val:"Yes/No", lbl:"Residential flag"}
+    ],
+    flow: ["IP enters auction","Nodify lookup","Category + IPC score","Block or bid"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"Nodify", cls:"no", name:"VPN/Proxy Category", desc:"VPN, Proxy, Darknet, Corporate, Hosting, Consumer-Privacy"},
+      {fc:"IPC", cls:"no", name:"IP Characteristics Score", desc:"Activity, Location, Range, Persistence — 5-week rolling window"},
+      {fc:"FC-12", cls:"no", name:"Proxy Database", desc:"Anonymous, Transparent, Hosting, Corporate proxy types"},
+      {fc:"FC-33", cls:"no", name:"VPN Proxy", desc:"Entry/exit nodes, VPN provider name, daily updates"}
+    ],
+    addiResult: "With Nodify in my pre-bid stack I cut invalid impressions by over a third. My client's ROAS jumped because every impression was now going to a real human, not a bot farm. The daily update cycle means I'm always working with fresh threat data.",
+    related: ["geo-targeting","brand-safety","igaming-compliance"]
+  },
+  {
+    id: "geo-targeting",
+    product: "netacuity",
+    title: "Hyperlocal Geo Targeting",
+    desc: "Reach users at ZIP+4, postal, city, or DMA level with 97%+ accuracy — far beyond standard DSP geo.",
+    tags: ["Geo Precision","Local Campaigns","ZIP+4"],
+    tagType: "na",
+    icon: "Pin",
+    pain: "My auto dealer client needs ads within 15 miles of their lots. My DSP's city targeting is showing ads 30+ miles away and wasting 40% of the budget. I need surgical precision.",
+    lead: "NetAcuity maps IP addresses to over 4 million distinct locations with 97%+ city-level accuracy and is the only provider offering sub-postal (ZIP+4, SA1, IRIS, PLZ8) precision targeting at scale.",
+    steps: [
+      {title:"Choose your granularity tier", body:"NetAcuity offers Country to Region to City to Postal to Sub-Postal (ZIP+4). Match the level to your campaign goal — national brand awareness vs. hyperlocal dealer radius targeting."},
+      {title:"Apply ZIP+4 for US sub-postal precision", body:"ZIP+4 is unique to NetAcuity — no other vendor offers it. Each ZIP+4 covers roughly a city block, enabling dealership-radius campaigns, neighborhood-level promotions, and precise geo fencing."},
+      {title:"Use lat/long for radius targeting", body:"NetAcuity returns 2-decimal lat/long coordinates accurate within 1.1km. Competitors return a city-level centroid with 10-20km radius uncertainty. Use these coordinates to build precise radius fences around store locations."},
+      {title:"Layer on DMA and CBSA for broadcast alignment", body:"For clients running TV and digital together, NetAcuity's DMA and CBSA databases align digital targeting to the exact same market boundaries as their linear TV buys."}
+    ],
+    outcomes: [
+      {val:"97%+", lbl:"City-level accuracy"},
+      {val:"99.99%", lbl:"Country accuracy"},
+      {val:"4M+", lbl:"Distinct locations"},
+      {val:"ZIP+4", lbl:"Deepest granularity"}
+    ],
+    flow: ["IP address","NetAcuity lookup","ZIP+4 + lat/long","Geo-fenced bid"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"FC-26", cls:"na", name:"NetAcuity Pulse Plus", desc:"Country, region, city, postal, ZIP+4, lat/long"},
+      {fc:"FC-30", cls:"na", name:"NetAcuity Pulse Max", desc:"Pulse Plus + historical intelligence, 5M locations"},
+      {fc:"FC-19", cls:"na", name:"CBSA", desc:"Core Based Statistical Areas — metro/micro market codes"},
+      {fc:"FC-17", cls:"na", name:"Demographics", desc:"DMA-level household, age/gender breakdowns"}
+    ],
+    addiResult: "Switching to NetAcuity ZIP+4 on my dealer campaigns cut wasted spend by 41%. The precise lat/long coordinates let me build exact radius fences around each store. My Tapad campaigns saw an 11% lift in desktop CTR with NetAcuity geo.",
+    related: ["home-biz-segmentation","connection-type","igaming-compliance"]
+  },
+  {
+    id: "ctv-retargeting",
+    product: "matchbook",
+    title: "CTV Retargeting from Website Visitors",
+    desc: "Reach the same users who visited your site — now on their Smart TV — using IP-to-MAID matching.",
+    tags: ["CTV","Retargeting","Cross-Device"],
+    tagType: "mb",
+    icon: "TV",
+    pain: "I have 500K IP addresses from my client's website visitors who didn't convert. I want to hit them again on their Smart TV but CTV targeting requires IP-level device matching. I'm missing 70% of the CTV opportunity.",
+    lead: "Matchbook's IP to MAID pathway uses deterministic signals from 1B+ devices to match website visitor IP addresses to Mobile Advertiser IDs — then extends those audiences to CTV and any IP-based device in the household.",
+    steps: [
+      {title:"Export website visitor IPs", body:"Collect IP addresses from your client's site (ad server logs, DSP segment, pixel). These are users who showed intent but didn't convert — your highest-value retargeting audience."},
+      {title:"Run IP to MAID match via Matchbook", body:"Matchbook matches each IP to the Mobile Advertiser IDs of devices most frequently observed connecting through that IP. Only deterministic Device Derived Data (D3) signals are used — no probabilistic guessing."},
+      {title:"Activate MAIDs across CTV and DSPs", body:"The matched MAIDs can be pushed to DSPs, retail media networks, walled gardens, and social platforms. CTV devices in the household are included via the MAID-to-IP extension pathway."},
+      {title:"Measure attribution post-campaign", body:"After the campaign, run the same match in reverse to see which target IPs converted on-site. Matchbook matches can be used for closed-loop measurement — not just activation."}
+    ],
+    outcomes: [
+      {val:"1B+", lbl:"Devices in D3 graph"},
+      {val:"250+", lbl:"Countries covered"},
+      {val:"Det.", lbl:"Match methodology"},
+      {val:"4", lbl:"Match pathways"}
+    ],
+    flow: ["Website visitor IP","Matchbook","MAID match","CTV + mobile activation"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"IP-MAID", cls:"mb", name:"IP to MAID Pathway", desc:"Website visitor IPs matched to mobile advertiser IDs"},
+      {fc:"MAID-IP", cls:"mb", name:"MAID to IP Pathway", desc:"App traffic matched to household IP/CTV devices"},
+      {fc:"Phys-IP", cls:"mb", name:"Physical to IP Pathway", desc:"Lat/long home coordinates to household IPs"},
+      {fc:"Spatial", cls:"mb", name:"Spatial Index to IP/MAID", desc:"Postal/geo boundary to IP+MAID targeting"}
+    ],
+    addiResult: "We took a 500K IP retargeting list and Matchbook expanded it to 1.2M matched MAIDs. CTV reach went from near zero to 380K households. Conversion rate on retargeted CTV was 2.4x our standard prospecting.",
+    related: ["ctv-attribution","offline-to-online","fraud-ivt"]
+  },
+  {
+    id: "ctv-attribution",
+    product: "matchbook",
+    title: "CTV Campaign Attribution",
+    desc: "Understand which CTV ad exposures drove real website visits and conversions using IP-based attribution.",
+    tags: ["Attribution","CTV Measurement","Conversion"],
+    tagType: "mb",
+    icon: "Chart",
+    pain: "My CPG client spent $3M on CTV. They're asking me if it worked — did any of those TV viewers visit the website and convert? I have no way to connect the CTV impression to the website visit.",
+    lead: "Matchbook closes the loop between CTV ad exposures and website conversions. By matching the IP addresses of converters back to the CTV devices they were exposed to, you can prove — deterministically — that CTV drove the outcome.",
+    steps: [
+      {title:"Capture CTV-exposed device IPs", body:"During the CTV campaign, log the IP addresses of households that received an impression. These are available through your DSP or CTV partner's delivery logs."},
+      {title:"Collect post-campaign converter IPs", body:"After the campaign window, pull IP addresses from your client's site analytics — specifically users who completed a target action such as a purchase, form fill, or page visit."},
+      {title:"Match exposed IPs to converter IPs via Matchbook", body:"Matchbook's D3 data connects the household IP observed during CTV delivery to the same household's IP observed during the website conversion event. Deterministic matching, not a panel model."},
+      {title:"Calculate incrementality", body:"Compare the conversion rate of CTV-exposed households vs. a matched control group. Report the true lift attributable to CTV spend — a metric that justifies the budget."}
+    ],
+    outcomes: [
+      {val:"Closed-loop", lbl:"Measurement model"},
+      {val:"Det.", lbl:"No panel estimates"},
+      {val:"HH-level", lbl:"Attribution granularity"},
+      {val:"Post-camp", lbl:"Activation timing"}
+    ],
+    flow: ["CTV impression IPs","Matchbook","Site converter IPs","Lift report"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"MAID-IP", cls:"mb", name:"MAID to IP Pathway", desc:"CTV device MAIDs matched back to household IPs"},
+      {fc:"IP-MAID", cls:"mb", name:"IP to MAID Pathway", desc:"Website visitor IPs matched for cross-device confirmation"},
+      {fc:"D3", cls:"mb", name:"Device Derived Data", desc:"1B+ device observation graph powering all matches"}
+    ],
+    addiResult: "We proved that our client's CTV campaign drove a 4.1x return. Matchbook connected 128K CTV-exposed households to 11,200 verified site conversions — conversions we couldn't have attributed with any other method.",
+    related: ["ctv-retargeting","offline-to-online","geo-targeting"]
+  },
+  {
+    id: "offline-to-online",
+    product: "matchbook",
+    title: "Offline Audience Onboarding",
+    desc: "Bridge your client's CRM and in-store data to digital channels — no email, no cookie required.",
+    tags: ["Offline Data","CRM Onboarding","Identity"],
+    tagType: "mb",
+    icon: "Store",
+    pain: "My retail client has 200K loyalty cardholders — proven high-LTV shoppers. Their digital campaigns don't connect to these known customers at all. I need to reach them online without relying on email match rates.",
+    lead: "Matchbook's Physical-to-IP pathway converts offline customer addresses (lat/long) to stable household IP addresses — enabling digital activation of CRM audiences across CTV, display, and social without cookies or email.",
+    steps: [
+      {title:"Geocode your client's CRM addresses", body:"Convert customer postal addresses to latitude/longitude coordinates. Standard geocoding services handle this. The result is a file of customer home coordinates."},
+      {title:"Submit lat/long to Matchbook Physical-to-IP", body:"Matchbook matches each coordinate to stable IP addresses observed at that location using D3 device data from 1B+ devices across 250+ countries. Stable IPs are residential home connections consistently observed at that location."},
+      {title:"Receive matched IP list for activation", body:"The output is a file of IP addresses linked to your CRM customers' homes. These can be pushed to any DSP, CTV platform, or ad server that accepts IP-based targeting."},
+      {title:"Optionally extend to MAIDs", body:"From the matched IPs, use Matchbook's MAID-to-IP extension to also get mobile device IDs for the same households — enabling mobile and social activation from the same CRM seed data."}
+    ],
+    outcomes: [
+      {val:"Lat/Long", lbl:"Input: home coordinates"},
+      {val:"IP Out", lbl:"Output: household IPs"},
+      {val:"No cookie", lbl:"No PII required"},
+      {val:"Multi-ch", lbl:"CTV + display + social"}
+    ],
+    flow: ["CRM address","Geocode","Matchbook Phys-IP","CTV + digital activation"],
+    flowHi: [2,3],
+    dbs: [
+      {fc:"Phys-IP", cls:"mb", name:"Physical to IP", desc:"Lat/long home coordinates matched to stable household IPs"},
+      {fc:"D3", cls:"mb", name:"Device Derived Data", desc:"GPS observations from 1B+ devices anchor the match"},
+      {fc:"Spatial", cls:"mb", name:"Spatial Index to IP/MAID", desc:"Postal boundaries matched to IP+MAID for geo campaigns"}
+    ],
+    addiResult: "We onboarded 187K of 200K loyalty customers — a 93.5% match rate vs. the 55-60% typical email match rate. Every matched household received personalized holiday sale ads on CTV and display. Revenue from the loyalty segment was 3.8x the non-loyalty segment during the sale period.",
+    related: ["ctv-retargeting","ctv-attribution","geo-targeting"]
+  },
+  {
+    id: "home-biz-segmentation",
+    product: "netacuity",
+    title: "Home vs. Business Segmentation",
+    desc: "Separate residential and corporate traffic to optimize bids, messaging, and frequency by connection type.",
+    tags: ["B2B vs B2C","Bid Strategy","Audience Quality"],
+    tagType: "na",
+    icon: "Home",
+    pain: "My CPMs for business IP traffic and residential traffic are identical but they convert completely differently. My B2C retail client is wasting money on corporate IPs, and my B2B client keeps missing office-connected buyers.",
+    lead: "NetAcuity's Home/Business database classifies every IP as residential or commercial based on connection type, domain, and ISP allocation data — enabling separate bidding strategies and creative messaging for each context.",
+    steps: [
+      {title:"Classify every IP as home or business", body:"The Home/Biz database (FC-9) returns a simple 'home' or 'business' value based on connection speed type: broadband/T1/T3 = business; DSL/cable = home. Updated continuously."},
+      {title:"Build separate bid tiers", body:"For a B2C retail campaign: reduce bids 30-40% on business IPs and increase on home IPs. For a B2B SaaS campaign: premium bids on corporate connections, suppress residential."},
+      {title:"Pair with ISP data for deeper context", body:"ISP (FC-8) returns the parent organization owning the IP range. Combined with Home/Biz, you can identify 'Comcast residential' vs. 'Siemens corporate network' — enabling industry-level targeting."},
+      {title:"Layer NAICS codes for industry targeting", body:"NAICS (FC-18) maps business IPs to North American Industry Classification codes. Target manufacturing companies in the Midwest or healthcare organizations in the Northeast with precision."}
+    ],
+    outcomes: [
+      {val:"Home/Biz", lbl:"FC-9 classification"},
+      {val:"NAICS", lbl:"Industry code via FC-18"},
+      {val:"ISP Name", lbl:"Parent org via FC-8"},
+      {val:"ASN", lbl:"Network routing via FC-10"}
+    ],
+    flow: ["IP address","Home/Biz + ISP + NAICS","Segment","Differentiated bid"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"FC-9", cls:"na", name:"Home/Business", desc:"'home' or 'business' — connection type classification"},
+      {fc:"FC-8", cls:"na", name:"ISP", desc:"Parent organization owning the IP range"},
+      {fc:"FC-18", cls:"na", name:"NAICS Codes", desc:"6-digit North American Industry Classification codes"},
+      {fc:"FC-10", cls:"na", name:"ASN", desc:"Autonomous System Number and network name"}
+    ],
+    addiResult: "Adding Home/Biz segmentation to my retail client's campaigns reduced wasted spend by 28% in the first week. For our B2B client, NAICS targeting let us reach healthcare-network IPs specifically — quality over quantity.",
+    related: ["connection-type","geo-targeting","fraud-ivt"]
+  },
+  {
+    id: "connection-type",
+    product: "netacuity",
+    title: "Connection Type & Mobile Carrier",
+    desc: "Bid smarter by understanding whether users are on mobile carrier networks, WiFi, broadband, or fiber.",
+    tags: ["Mobile Carrier","Connection Speed","Bid Optimization"],
+    tagType: "na",
+    icon: "Signal",
+    pain: "My mobile app-install campaign CPMs are the same whether a user is on LTE or WiFi. But LTE users convert 3x better for our app install goal. I'm not using signal that already exists in the IP.",
+    lead: "NetAcuity's Mobile Carrier database identifies carrier-connected IPs (Verizon, T-Mobile, AT&T, etc.) while the base database provides connection speed and type — enabling granular bid adjustments based on how users are actually connecting.",
+    steps: [
+      {title:"Identify mobile carrier connections", body:"Mobile Carrier (FC-24) returns the carrier name, Mobile Country Code (MCC), and Mobile Network Code (MNC) for carrier-connected IPs. A non-null response means this is a mobile user on a cellular network, not WiFi."},
+      {title:"Read connection speed and type", body:"The base NetAcuity database returns connection type (cable, DSL, broadband, T1, mobile) and connection speed. Use these to differentiate WiFi home users from mobile carrier users from office broadband."},
+      {title:"Apply carrier-specific bid adjustments", body:"Not all carriers perform equally for your goals. For app-install campaigns, 4G/5G LTE carrier connections signal a user actively on their phone — highest intent for mobile actions."},
+      {title:"Suppress non-mobile inventory in mobile campaigns", body:"Using carrier and connection type fields together, you can ensure your mobile app-install campaign only bids on genuine mobile carrier traffic — not desktop users or WiFi tablet users who rarely install apps."}
+    ],
+    outcomes: [
+      {val:"Carrier", lbl:"Name + MCC + MNC"},
+      {val:"LTE/5G", lbl:"Mobile connection flag"},
+      {val:"FC-24", lbl:"Mobile Carrier database"},
+      {val:"Speed", lbl:"Connection speed type"}
+    ],
+    flow: ["IP address","Mobile Carrier FC-24","Carrier + connection type","Carrier bid tier"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"FC-24", cls:"na", name:"Mobile Carrier", desc:"Carrier name, MCC, MNC — identifies cellular connections"},
+      {fc:"FC-26", cls:"na", name:"NetAcuity Base", desc:"Connection type: cable, DSL, broadband, T1, mobile, fiber"},
+      {fc:"FC-9", cls:"na", name:"Home/Business", desc:"Residential vs corporate — pairs with carrier data"}
+    ],
+    addiResult: "For my app-install campaign, filtering to carrier-only mobile IPs increased install rate by 2.6x. We were previously serving expensive mobile CPMs to WiFi tablet users who almost never install. NetAcuity carrier detection fixed that completely.",
+    related: ["home-biz-segmentation","geo-targeting","fraud-ivt"]
+  },
+  {
+    id: "ip-stability",
+    product: "nodify",
+    title: "IP Stability and Persistence Scoring",
+    desc: "Know how stable, persistent, and trustworthy an IP address is — before you bid on it.",
+    tags: ["IP Quality","Stability Score","Audience Trust"],
+    tagType: "no",
+    icon: "Lock",
+    pain: "I keep buying audience segments that look great on paper but show weird behavior — users that appear to jump between 12 cities in a week. I think I'm buying against unstable or shared IPs killing my frequency capping and attribution.",
+    lead: "Nodify's IP Characteristics (IPC) module provides a 5-week behavioral fingerprint for every IP — how many devices, how many locations, how stable — giving you a trust score before any dollar is spent.",
+    steps: [
+      {title:"Read the IPC composite score", body:"The IPC score (1-5) summarizes stability: Score 1 = low device count, stable location = high trust (residential household). Score 5 = high device count, many locations = low stability (shared/proxy/mobile hotspot)."},
+      {title:"Use location stability metrics", body:"IPC tracks how many weeks an IP stays within the same 100-meter radius, city, postal code, and region. An IP stable for 22+ weeks at radius level is almost certainly a home broadband connection."},
+      {title:"Check observation count and distinct devices", body:"ipc-obs-count shows total activity in 5 weeks. ipc-distinct-device-ids shows how many unique devices used this IP. 1-2 devices = household. 50+ devices = corporate NAT, airport WiFi, or shared proxy."},
+      {title:"Set quality thresholds for your campaigns", body:"For high-value retargeting: only bid on IPs with score 2 or lower and radius-weeks-stable of 4 or more. For brand safety and fraud prevention: block score=5 with high distinct-device-ids."}
+    ],
+    outcomes: [
+      {val:"5 wks", lbl:"Rolling observation window"},
+      {val:"1-5", lbl:"Composite IPC score"},
+      {val:"100m", lbl:"Radius stability metric"},
+      {val:"Devices", lbl:"Distinct device ID count"}
+    ],
+    flow: ["IP address","IPC behavioral window","Score + stability","Trust-gated bid"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"IPC", cls:"no", name:"IP Characteristics", desc:"Activity, Location, Range, Persistence — 5-week D3 window"},
+      {fc:"IPC-Score", cls:"no", name:"Composite Score", desc:"1=high stability, 5=high churn — household vs shared IP"},
+      {fc:"IPC-Persist", cls:"no", name:"Persistence Metrics", desc:"Radius/city/postal weeks stable — location lock score"}
+    ],
+    addiResult: "Using IPC stability scoring I classified 23% of my retargeting list as unstable IPs — shared connections, hotel WiFi, and mobile hotspots. Removing those improved reach de-duplication and my CPA dropped 18% because I stopped over-serving the same physical device through 6 different IP addresses.",
+    related: ["fraud-ivt","brand-safety","home-biz-segmentation"]
+  },
+  {
+    id: "brand-safety",
+    product: "nodify",
+    title: "Brand Safety and Darknet Blocking",
+    desc: "Prevent your ads from ever reaching Tor nodes, darknet users, or known malicious infrastructure.",
+    tags: ["Brand Safety","Darknet","Tor Blocking"],
+    tagType: "no",
+    icon: "Lock2",
+    pain: "My CPG client's ads appeared in a brand safety audit as being served to Tor exit nodes and darknet-adjacent traffic. Legal is calling. I need a way to prevent this that doesn't rely on content scanning alone.",
+    lead: "Nodify's daily node file identifies Tor exit nodes, Tor relays, darknet infrastructure, and malicious hosting IPs. Pre-bid suppression of these IPs ensures your ads never reach fundamentally unsafe traffic regardless of publisher or placement.",
+    steps: [
+      {title:"Block Tor exit and relay nodes", body:"Nodify identifies Tor node types: tor-exit (where anonymized traffic hits the internet), tor-relay (routing nodes). These are definitionally non-brand-safe — real consumers don't browse through Tor. Block them unconditionally."},
+      {title:"Suppress darknet-category IPs", body:"IPs categorized as Darknet in Nodify are associated with hidden-service infrastructure. Serving ads here is both brand-unsafe and almost entirely non-human. Add to your universal suppression list."},
+      {title:"Flag malicious hosting infrastructure", body:"Nodify's 'Known Malicious' feature flag identifies providers hosting on infrastructure flagged for illicit activities (bulletproof hosting). These IPs often rotate through ad exchanges and evade URL-level brand safety tools."},
+      {title:"Integrate daily into DSP exclusion lists", body:"Nodify delivers a daily node delivery file. Ingest it into your DSP's IP exclusion list, ad server blocklist, or pre-bid integration. The daily refresh means you're always working with up-to-date threat intelligence."}
+    ],
+    outcomes: [
+      {val:"Daily", lbl:"Threat data refresh"},
+      {val:"Tor", lbl:"Node types identified"},
+      {val:"Darknet", lbl:"Category blocked"},
+      {val:"Pre-bid", lbl:"Integration point"}
+    ],
+    flow: ["Bid request IP","Nodify darknet check","Category match","Suppressed or pass"],
+    flowHi: [1,2],
+    dbs: [
+      {fc:"Nodify", cls:"no", name:"VPN/Proxy/Darknet", desc:"Category classification — includes Darknet type"},
+      {fc:"Node-type", cls:"no", name:"Node Types", desc:"exit, entry, both, tor-exit, tor-relay"},
+      {fc:"FC-33", cls:"no", name:"VPN Proxy", desc:"Commercial VPN provider name — for known-VPN blocking"}
+    ],
+    addiResult: "After integrating Nodify's daily darknet and Tor suppression list, our next brand safety audit came back clean. Zero impressions to Tor nodes. The legal team signed off on our programmatic strategy for the first time.",
+    related: ["fraud-ivt","ip-stability","igaming-compliance"]
+  },
+  {
+    id: "igaming-compliance",
+    product: "netacuity",
+    title: "iGaming and Geo-Compliance",
+    desc: "Ensure ads and content only reach users in licensed jurisdictions — and detect VPN users faking their location.",
+    tags: ["Compliance","iGaming","VPN Detection"],
+    tagType: "na",
+    icon: "Scale",
+    pain: "My gambling client is licensed in 8 states. They cannot show ads in unlicensed states. We're seeing suspicious traffic that looks like it's coming from licensed states but behaves strangely. VPN users faking their location is a real regulatory risk.",
+    lead: "Combining NetAcuity's 99.99% country and 97%+ city geo accuracy with Nodify's VPN/proxy detection creates a two-layer compliance wall: verified location plus masked-location detection for any IP that passes the geo check.",
+    steps: [
+      {title:"Gate impressions to licensed states with NetAcuity", body:"NetAcuity Pulse or Pulse Plus provides state/region data with the precision needed for US state-level licensing compliance. The 97%+ city accuracy means geo false-positives are rare — genuine residents of licensed states see ads."},
+      {title:"Check for VPN/proxy masking on every licensed-state IP", body:"Any IP that clears the geo check should be run through Nodify. If Nodify categorizes it as VPN, Consumer-Privacy, or Anonymous proxy, that user may be faking their location. Withhold the impression."},
+      {title:"Use IPC stability to validate residential intent", body:"A user in a licensed state with IPC score=1 (stable, low-device household) is almost certainly genuine. A licensed-state IP with IPC score=5 (high churn, many countries) is suspicious — enforce stricter filtering."},
+      {title:"Log and audit every decision", body:"The combination of NetAcuity geo + Nodify VPN classification + IPC score creates an auditable decision trail: this impression was served because geo=NY, Nodify=clean, IPC=2. Required for regulatory reporting."}
+    ],
+    outcomes: [
+      {val:"99.99%", lbl:"Country accuracy"},
+      {val:"97%+", lbl:"State/city accuracy"},
+      {val:"2-layer", lbl:"Geo + VPN check"},
+      {val:"Audit", lbl:"Decision trail"}
+    ],
+    flow: ["IP address","NetAcuity geo check","Nodify VPN check","Serve or block"],
+    flowHi: [1,2,3],
+    dbs: [
+      {fc:"FC-26", cls:"na", name:"NetAcuity Pulse Plus", desc:"State/region/city + postal precision for US compliance"},
+      {fc:"Nodify", cls:"no", name:"VPN/Proxy Category", desc:"Detect location masking by consumer VPNs"},
+      {fc:"IPC", cls:"no", name:"IP Characteristics", desc:"Location stability validates licensed-state residency"}
+    ],
+    addiResult: "Our iGaming client passed their quarterly regulatory audit for the first time. The two-layer approach caught 4,200 suspicious licensed-state IPs that were actually VPN-masked traffic from unlicensed states. Zero compliance violations.",
+    related: ["fraud-ivt","brand-safety","geo-targeting"]
+  }
+];
+
+var idMap = {};
+for (var i = 0; i < USE_CASES.length; i++) {
+  idMap[USE_CASES[i].id] = USE_CASES[i];
+}
+
+var productLabels = {netacuity:"NetAcuity", nodify:"Nodify IPC", matchbook:"Matchbook"};
+
+function filterCards(type) {
+  var cards = document.querySelectorAll(".use-case-card");
+  for (var i = 0; i < cards.length; i++) {
+    cards[i].style.display = (type === "all" || cards[i].dataset.product === type) ? "" : "none";
+  }
+  var btns = document.querySelectorAll(".filter-btn");
+  for (var j = 0; j < btns.length; j++) {
+    btns[j].classList.remove("active");
+    if (btns[j].dataset.filter === type) btns[j].classList.add("active");
+  }
+}
+
+function openDetail(id) {
+  var u = idMap[id];
+  if (!u) return;
+  document.getElementById("home").style.display = "none";
+  var d = document.getElementById("detail");
+  d.style.display = "block";
+  window.scrollTo(0, 0);
+
+  var flowHTML = "";
+  for (var fi = 0; fi < u.flow.length; fi++) {
+    var isHi = u.flowHi.indexOf(fi) !== -1;
+    if (fi > 0) flowHTML += '<div class="flow-arrow">&rarr;</div>';
+    flowHTML += '<div class="flow-node' + (isHi ? " hi-" + u.product : "") + '">' + u.flow[fi] + "</div>";
+  }
+
+  var stepsHTML = "";
+  for (var si = 0; si < u.steps.length; si++) {
+    stepsHTML += '<div class="step"><div class="step-num ' + u.product + '">' + (si + 1) + "</div>" +
+      '<div class="step-content"><h4>' + u.steps[si].title + "</h4><p>" + u.steps[si].body + "</p></div></div>";
+  }
+
+  var outcomesHTML = "";
+  for (var oi = 0; oi < u.outcomes.length; oi++) {
+    outcomesHTML += '<div class="outcome-chip ' + u.product + '"><div class="val">' + u.outcomes[oi].val + "</div>" +
+      '<div class="lbl">' + u.outcomes[oi].lbl + "</div></div>";
+  }
+
+  var dbsHTML = "";
+  for (var di = 0; di < u.dbs.length; di++) {
+    var db = u.dbs[di];
+    dbsHTML += '<div class="db-item"><div><div class="db-fc ' + db.cls + '">' + db.fc + "</div></div>" +
+      '<div><div class="db-name">' + db.name + '</div><div class="db-desc">' + db.desc + "</div></div></div>";
+  }
+
+  var relatedHTML = "";
+  if (u.related) {
+    for (var ri = 0; ri < u.related.length; ri++) {
+      var r = idMap[u.related[ri]];
+      if (r) {
+        relatedHTML += '<div class="related-item" onclick="openDetail(\'' + r.id + '\')">' +
+          '<div class="related-dot ' + r.product + '"></div><span>' + r.title + "</span></div>";
+      }
+    }
+  }
+
+  var html = '<div class="detail-header">' +
+    '<button class="back-btn" onclick="goHome()">&larr; Back to all use cases</button>' +
+    '<div class="detail-product-badge ' + u.product + '">' + productLabels[u.product] + "</div>" +
+    '<div class="detail-title">' + u.title + "</div>" +
+    '<div class="detail-lead">' + u.lead + "</div></div>" +
+    '<div class="detail-body"><div class="left-col">' +
+    '<div class="pain-card"><div class="pain-title">Addi\'s Challenge</div><p>' + u.pain + "</p></div>" +
+    '<div class="section-label">How It Works</div><div class="steps">' + stepsHTML + "</div>" +
+    '<div class="section-label">Key Metrics</div><div class="outcomes">' + outcomesHTML + "</div>" +
+    '<div class="section-label">Data Flow</div><div class="flow-diagram">' + flowHTML + "</div>" +
+    '<div class="addi-result"><p>' + u.addiResult + '</p><div class="addi-sig">&mdash; Addi, VP Programmatic</div></div>' +
+    "</div><div class="+"\"right-col\">" +
+    '<div class="sidebar-card"><h3>Databases Used</h3><div class="db-list">' + dbsHTML + "</div></div>" +
+    (relatedHTML ? '<div class="sidebar-card"><h3>Related Use Cases</h3><div class="related-list">' + relatedHTML + "</div></div>" : "") +
+    "</div></div>";
+
+  d.innerHTML = html;
+}
+
+function goHome() {
+  document.getElementById("detail").style.display = "none";
+  document.getElementById("home").style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+var grid = document.getElementById("cards-grid");
+for (var ci = 0; ci < USE_CASES.length; ci++) {
+  (function(u) {
+    var tagsHTML = "";
+    for (var ti = 0; ti < u.tags.length; ti++) {
+      tagsHTML += '<div class="tag ' + u.tagType + '">' + u.tags[ti] + "</div>";
+    }
+    var div = document.createElement("div");
+    div.className = "use-case-card " + u.product;
+    div.dataset.product = u.product;
+    div.innerHTML = '<div class="card-product ' + u.product + '">' + productLabels[u.product] + "</div>" +
+      '<div class="card-title">' + u.title + "</div>" +
+      '<div class="card-desc">' + u.desc + "</div>" +
+      '<div class="card-tags">' + tagsHTML + "</div>" +
+      '<div class="card-arrow">&rarr;</div>';
+    div.addEventListener("click", function() { openDetail(u.id); });
+    grid.appendChild(div);
+  })(USE_CASES[ci]);
+}
+
+document.getElementById("filter-bar").addEventListener("click", function(e) {
+  var btn = e.target.closest(".filter-btn");
+  if (btn) filterCards(btn.dataset.filter);
+});
+</script>
+</body>
+</html>

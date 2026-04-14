@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addi's AdTech Adventure</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f0f2e; color: #fff; min-height: 100vh; overflow-x: hidden; }
+
+  /* ── TITLE SCREEN ── */
+  #title-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; text-align: center; padding: 20px;
+    background: linear-gradient(135deg, #0f0f2e 0%, #1a1a4e 50%, #0d2d5e 100%);
+  }
+  .de-logo { font-size: 13px; letter-spacing: 3px; color: #4db8ff; text-transform: uppercase; margin-bottom: 8px; }
+  .title-main { font-size: clamp(28px,5vw,52px); font-weight: 900; color: #fff; line-height: 1.1; margin-bottom: 6px; }
+  .title-sub { font-size: clamp(14px,2.5vw,20px); color: #4db8ff; margin-bottom: 30px; }
+  .addi-avatar-big {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 56px; margin: 0 auto 24px; border: 4px solid #4db8ff;
+    box-shadow: 0 0 30px rgba(77,184,255,0.4);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 30px rgba(77,184,255,0.4)} 50%{box-shadow:0 0 50px rgba(77,184,255,0.8)} }
+  .intro-text { max-width: 560px; color: #c0d4f0; line-height: 1.6; margin-bottom: 28px; font-size: 15px; }
+  .btn-start {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff; border: none; padding: 16px 48px; font-size: 18px; font-weight: 700;
+    border-radius: 50px; cursor: pointer; transition: all .2s;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.5); letter-spacing: 1px;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(37,99,235,0.7); }
+  .product-badges { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+  .badge { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 6px 16px; font-size: 12px; color: #a0b8d8; }
+
+  /* ── GAME SCREEN ── */
+  #game-screen { display: none; min-height: 100vh; padding: 0; }
+
+  /* Top HUD */
+  .hud {
+    background: rgba(15,15,46,0.95); border-bottom: 1px solid rgba(77,184,255,0.2);
+    padding: 10px 20px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px;
+  }
+  .hud-logo { font-size: 11px; letter-spacing: 2px; color: #4db8ff; font-weight: 700; }
+  .hud-score { display: flex; gap: 16px; align-items: center; }
+  .score-pill { background: rgba(37,99,235,0.3); border: 1px solid #2563eb; border-radius: 20px; padding: 4px 14px; font-size: 13px; font-weight: 700; }
+  .progress-bar-wrap { flex: 1; min-width: 120px; max-width: 220px; }
+  .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; }
+  .progress-bar-fill { background: linear-gradient(90deg, #2563eb, #4db8ff); border-radius: 10px; height: 8px; transition: width .4s; }
+  .progress-label { font-size: 10px; color: #7090b0; margin-top: 2px; }
+
+  /* Main game area */
+  .game-main { display: flex; gap: 0; min-height: calc(100vh - 56px); }
+
+  /* Addi sidebar */
+  .addi-panel {
+    width: 240px; min-width: 220px; background: rgba(255,255,255,0.03);
+    border-right: 1px solid rgba(77,184,255,0.1);
+    padding: 24px 16px; display: flex; flex-direction: column; gap: 16px;
+    flex-shrink: 0;
+  }
+  .addi-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; margin: 0 auto; border: 3px solid #4db8ff;
+    box-shadow: 0 0 20px rgba(77,184,255,0.3);
+  }
+  .addi-name { text-align: center; font-weight: 700; font-size: 15px; }
+  .addi-role { text-align: center; font-size: 11px; color: #6080a0; margin-top: 2px; }
+  .addi-speech {
+    background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.3);
+    border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #c0d4f0;
+    line-height: 1.5; position: relative; min-height: 80px;
+  }
+  .addi-speech::before {
+    content: '💬'; position: absolute; top: -10px; left: 12px;
+    background: #0f0f2e; padding: 0 4px; font-size: 14px;
+  }
+  .addi-stats { margin-top: auto; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+  .stat-label { color: #6080a0; }
+  .stat-val { font-weight: 700; color: #4db8ff; }
+  .achievements { display: flex; flex-wrap: wrap; gap: 4px; }
+  .ach { font-size: 18px; }
+
+  /* Content area */
+  .content-area { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+  /* Scenario card */
+  .scenario-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(77,184,255,0.15);
+    border-radius: 16px; padding: 28px; margin-bottom: 20px; max-width: 780px;
+  }
+  .scenario-tag {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; padding: 4px 12px; border-radius: 20px; margin-bottom: 12px;
+  }
+  .tag-netacuity { background: rgba(37,99,235,0.25); color: #60a5fa; border: 1px solid #2563eb; }
+  .tag-nodify    { background: rgba(168,85,247,0.2); color: #c084fc; border: 1px solid #7c3aed; }
+  .tag-matchbook { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid #059669; }
+  .tag-combo     { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid #d97706; }
+
+  .scenario-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .scenario-desc { color: #a0b8d8; line-height: 1.6; font-size: 14px; margin-bottom: 20px; }
+
+  /* Choices */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px; padding: 14px 18px; text-align: left; cursor: pointer;
+    color: #c0d4f0; font-size: 14px; transition: all .2s; display: flex; align-items: flex-start; gap: 12px;
+  }
+  .choice-btn:hover { background: rgba(37,99,235,0.15); border-color: #2563eb; transform: translateX(4px); }
+  .choice-letter {
+    min-width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; flex-shrink: 0; margin-top: 1px;
+  }
+  .choice-text { line-height: 1.5; }
+
+  /* Feedback */
+  .feedback-panel {
+    display: none; border-radius: 14px; padding: 20px 24px; margin-top: 16px;
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  .feedback-correct { background: rgba(16,185,129,0.12); border: 1px solid #059669; }
+  .feedback-wrong   { background: rgba(239,68,68,0.1);   border: 1px solid #dc2626; }
+  .feedback-icon { font-size: 24px; margin-bottom: 8px; }
+  .feedback-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }
+  .feedback-body { font-size: 13px; color: #c0d4f0; line-height: 1.6; }
+  .feedback-product {
+    margin-top: 12px; padding: 12px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); font-size: 12px; color: #a0b8d8; line-height: 1.5;
+  }
+  .feedback-product strong { color: #4db8ff; }
+
+  .btn-next {
+    margin-top: 16px; background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff; border: none; padding: 12px 32px; border-radius: 50px;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+  }
+  .btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,0.5); }
+
+  /* Data viz mini-cards */
+  .data-viz { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+  .data-chip {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 8px 14px; font-size: 12px;
+  }
+  .data-chip .val { font-size: 18px; font-weight: 800; color: #4db8ff; display: block; }
+  .data-chip .lbl { color: #6080a0; font-size: 10px; }
+
+  /* Use-case map (chapter nav) */
+  .chapter-map {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; max-width: 780px;
+  }
+  .chapter-dot {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid rgba(255,255,255,0.15);
+    color: #6080a0;
+  }
+  .chapter-dot.done { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .chapter-dot.active { background: rgba(37,99,235,0.3); border-color: #4db8ff; color: #4db8ff; animation: pulse 2s infinite; }
+  .chapter-dot.locked { background: transparent; }
+
+  /* Results screen */
+  #results-screen { display: none; min-height: 100vh; background: linear-gradient(135deg, #0f0f2e, #0d2d5e); padding: 40px 20px; text-align: center; }
+  .results-inner { max-width: 680px; margin: 0 auto; }
+  .results-trophy { font-size: 72px; margin-bottom: 16px; animation: bounce 1s ease 3; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+  .results-title { font-size: 36px; font-weight: 900; margin-bottom: 8px; }
+  .results-score { font-size: 64px; font-weight: 900; color: #4db8ff; }
+  .results-max { font-size: 20px; color: #6080a0; margin-bottom: 24px; }
+  .results-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 24px 0; }
+  .result-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; }
+  .result-card .r-icon { font-size: 28px; margin-bottom: 6px; }
+  .result-card .r-label { font-size: 11px; color: #6080a0; margin-bottom: 4px; }
+  .result-card .r-val { font-size: 22px; font-weight: 800; color: #4db8ff; }
+  .unlock-section { margin: 24px 0; }
+  .unlock-title { font-size: 14px; color: #6080a0; margin-bottom: 10px; }
+  .unlock-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .unlock-chip { background: rgba(37,99,235,0.2); border: 1px solid #2563eb; border-radius: 8px; padding: 8px 14px; font-size: 12px; }
+  .btn-restart { margin-top: 20px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 14px 40px; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; }
+
+  /* Responsive */
+  @media(max-width:700px) {
+    .addi-panel { display: none; }
+    .content-area { padding: 16px; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ TITLE SCREEN ══════════════ -->
+<div id="title-screen">
+  <div class="de-logo">digital element</div>
+  <div class="addi-avatar-big">👩‍💼</div>
+  <div class="title-main">Addi's AdTech Adventure</div>
+  <div class="title-sub">An Interactive Product Demo Experience</div>
+  <p class="intro-text">
+    Meet <strong>Addi</strong> — a sharp AdTech professional looking to maximize campaign performance, fight fraud, and unlock new audience reach.<br><br>
+    Help Addi solve 8 real-world challenges using <strong>NetAcuity</strong>, <strong>Nodify IPC</strong>, and <strong>Matchbook</strong>. Each correct answer reveals how Digital Element's data drives smarter decisions.
+  </p>
+  <button class="btn-start" onclick="startGame()">▶ Start the Demo</button>
+  <div class="product-badges" style="margin-top:20px;">
+    <div class="badge">🎯 NetAcuity IP Intelligence</div>
+    <div class="badge">🛡️ Nodify IPC VPN/Proxy</div>
+    <div class="badge">🔗 Matchbook Identity</div>
+  </div>
+</div>
+
+<!-- ══════════════ GAME SCREEN ══════════════ -->
+<div id="game-screen">
+  <div class="hud">
+    <div class="hud-logo">digital element · Addi's AdTech Adventure</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="progress-label" id="prog-label">Scenario 0 of 8</div>
+    </div>
+    <div class="hud-score">
+      <div class="score-pill">⭐ <span id="score-display">0</span> pts</div>
+      <div class="score-pill">🔥 <span id="streak-display">0</span> streak</div>
+    </div>
+  </div>
+
+  <div class="game-main">
+    <!-- Addi sidebar -->
+    <div class="addi-panel">
+      <div class="addi-avatar">👩‍💼</div>
+      <div class="addi-name">Addi</div>
+      <div class="addi-role">VP of Programmatic, AdCo</div>
+      <div class="addi-speech" id="addi-speech">Hey! I'm Addi. I run programmatic campaigns for major brands. Let's figure out how your data can help me win! 🚀</div>
+      <div class="addi-stats">
+        <div style="font-size:11px;color:#6080a0;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Addi's Toolkit</div>
+        <div class="stat-row"><span class="stat-label">🎯 Geo Precision</span><span class="stat-val" id="stat-geo">—</span></div>
+        <div class="stat-row"><span class="stat-label">🛡️ Fraud Defense</span><span class="stat-val" id="stat-fraud">—</span></div>
+        <div class="stat-row"><span class="stat-label">🔗 Identity Reach</span><span class="stat-val" id="stat-identity">—</span></div>
+        <div class="stat-row"><span class="stat-label">📊 Data Quality</span><span class="stat-val" id="stat-data">—</span></div>
+        <div style="margin-top:12px;font-size:11px;color:#6080a0;text-transform:uppercase;letter-spacing:1px;">Achievements</div>
+        <div class="achievements" id="achievements" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content-area">
+      <div class="chapter-map" id="chapter-map"></div>
+      <div id="scenario-container"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ RESULTS SCREEN ══════════════ -->
+<div id="results-screen">
+  <div class="results-inner">
+    <div class="results-trophy" id="results-trophy">🏆</div>
+    <div class="results-title" id="results-title">Campaign Complete!</div>
+    <div class="results-score" id="results-score">0</div>
+    <div class="results-max">out of 800 points</div>
+    <div class="results-grid">
+      <div class="result-card"><div class="r-icon">🎯</div><div class="r-label">Correct Answers</div><div class="r-val" id="r-correct">0/8</div></div>
+      <div class="result-card"><div class="r-icon">🔥</div><div class="r-label">Best Streak</div><div class="r-val" id="r-streak">0</div></div>
+      <div class="result-card"><div class="r-icon">⚡</div><div class="r-label">Perfect Rounds</div><div class="r-val" id="r-perfect">0</div></div>
+    </div>
+    <div class="unlock-section">
+      <div class="unlock-title">Use Cases Mastered</div>
+      <div class="unlock-grid" id="unlocks-grid"></div>
+    </div>
+    <p style="color:#a0b8d8;font-size:13px;max-width:500px;margin:0 auto 20px;">Ready to bring Digital Element's IP intelligence and identity matching to your campaigns? Visit <strong style="color:#4db8ff;">digitalelement.com</strong></p>
+    <button class="btn-restart" onclick="restartGame()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  SCENARIO DATA
+// ══════════════════════════════════════════
+const SCENARIOS = [
+  {
+    id: 1,
+    tag: 'netacuity', tagLabel: 'NetAcuity · Geo Targeting',
+    title: "The Local Campaign Problem",
+    addiSpeech: "My client is a regional auto dealer. They're spending national CPMs but only serving local markets. I'm wasting SO much budget. How can I fix this?",
+    desc: "Addi's auto dealer client needs to serve ads only within a 15-mile radius of their dealership locations across 12 US cities. The DSP is using basic city-level targeting and getting complaints that ads are showing up 30+ miles away, inflating spend with zero ROI.",
+    dataViz: [
+      {val:"97%+", lbl:"City-Level Accuracy"},
+      {val:"4M+", lbl:"Distinct Locations"},
+      {val:"ZIP+4", lbl:"Deepest Granularity"},
+      {val:"1.1km", lbl:"Coordinate Radius"}
+    ],
+    choices: [
+      {letter:"A", text:"Use standard city-level geo targeting from the DSP's built-in tools — they're good enough for local campaigns.", correct: false},
+      {letter:"B", text:"Use NetAcuity Pulse Plus with ZIP+4 targeting to precisely map IP addresses down to sub-postal code level, ensuring ads only reach users within the exact dealership radius.", correct: true},
+      {letter:"C", text:"Target by DMA (Designated Market Area) to capture the full metro audience and maximize impressions.", correct: false},
+      {letter:"D", text:"Use IP country-level targeting combined with time-of-day scheduling to approximate local audiences.", correct: false}
+    ],
+    correctIdx: 1,
+    feedbackCorrect: "Nailed it! 🎯",
+    feedbackWrong: "Not quite — standard DSP geo is far less precise.",
+    feedbackBody: "NetAcuity Pulse Plus provides ZIP+4 sub-postal targeting — the only vendor that goes this deep. While other providers return a city-level centroid with wide radius uncertainty, NetAcuity maps IPs to locations accurate within 1.1km. For a dealership campaign, this means Addi spends budget only on users who can actually drive to the lot.",
+    productDetail: "<strong>NetAcuity Pulse Plus</strong> includes ZIP+4 (US), SA1 (Australia), IRIS (France), PLZ8 (Germany) — hyperlocal granularity no competitor offers. Accuracy: 97%+ at city, 99.99% at country.",
+    useCaseUnlock: "📍 Hyperlocal Geo Targeting",
+    statImpact: {geo: "ZIP+4 ✅"}
+  },
+  {
+    id: 2,
+    tag: 'nodify', tagLabel: 'Nodify IPC · Fraud Prevention',
+    title: "The Phantom Traffic Crisis",
+    addiSpeech: "My campaign metrics look great on paper — high CTR, tons of impressions — but my client's sales haven't moved at all. Something smells fraudulent...",
+    desc: "Addi is running a $2M display campaign and notices that 40% of her traffic is coming from IPs that never convert. A data scientist flags that many high-CTR IPs appear to be using anonymizing services. She needs to identify and filter this non-human, masked traffic before the next billing cycle.",
+    dataViz: [
+      {val:"Daily", lbl:"Nodify Update Freq"},
+      {val:"10+", lbl:"Proxy Categories"},
+      {val:"Yes/No", lbl:"Residential Flag"},
+      {val:"IPC-5", lbl:"Max Risk Score"}
+    ],
+    choices: [
+      {letter:"A", text:"Accept some fraud as industry standard — everyone deals with it. Focus on optimizing creative instead.", correct: false},
+      {letter:"B", text:"Block all IPs that come from outside the US to reduce suspicious traffic.", correct: false},
+      {letter:"C", text:"Use Nodify to identify VPN, Proxy, Darknet, and hosting IPs — then suppress or deprioritize those impressions based on category and residential proxy flags.", correct: true},
+      {letter:"D", text:"Only buy inventory from premium publishers with manual vetting — avoid all programmatic channels.", correct: false}
+    ],
+    correctIdx: 2,
+    feedbackCorrect: "Excellent fraud-busting instinct! 🛡️",
+    feedbackWrong: "That approach doesn't actually address the masked traffic problem.",
+    feedbackBody: "Nodify provides daily-updated categorized VPN/Proxy/Darknet node data. Addi can suppress IPs flagged as 'Hosting', 'Darknet', or anonymous proxy traffic — traffic that's almost never a real human consumer. The residential proxy flag is key: residential=yes means a real subscriber MAY be present; residential=no from a data center is almost certainly non-human. The IPC composite score (1-5) adds behavioral context.",
+    productDetail: "<strong>Nodify</strong> categories: VPN, Proxy, Darknet, Corporate, Hosting, Consumer-Privacy, Public. Updated daily. Pair with <strong>IPC score</strong>: score=5 means high device/location volatility → likely non-human.",
+    useCaseUnlock: "🛡️ Ad Fraud Prevention",
+    statImpact: {fraud: "Active 🛡️"}
+  },
+  {
+    id: 3,
+    tag: 'matchbook', tagLabel: 'Matchbook · Identity Resolution',
+    title: "The CTV Gap",
+    addiSpeech: "My client has an amazing CRM list of their best customers — but they're IP addresses from website visits. I need to reach those same people on their Smart TVs. Help!",
+    desc: "Addi has a list of 500,000 IP addresses from her client's e-commerce site — visitors who browsed but didn't purchase. She wants to retarget these exact audiences on Connected TV (CTV) devices in the same households, but CTV targeting requires IP-level matching to the device. Her current approach is missing 70% of the CTV opportunity.",
+    dataViz: [
+      {val:"1B+", lbl:"Devices Powered"},
+      {val:"250+", lbl:"Countries"},
+      {val:"4", lbl:"Match Pathways"},
+      {val:"CTV", lbl:"Primary Use Case"}
+    ],
+    choices: [
+      {letter:"A", text:"Use probabilistic household modeling to guess which CTV devices might belong to the same household.", correct: false},
+      {letter:"B", text:"Use Matchbook's IP-to-MAID pathway to match website visitor IPs to Mobile Advertiser IDs, then extend to CTV and other IP-based devices using deterministic signals.", correct: true},
+      {letter:"C", text:"Ask customers to log in on their CTV apps to create a deterministic match — wait for enough users to self-identify.", correct: false},
+      {letter:"D", text:"Buy contextual CTV inventory targeting shows her client's typical customer demographic instead of retargeting.", correct: false}
+    ],
+    correctIdx: 1,
+    feedbackCorrect: "Cross-device mastery! 📺",
+    feedbackWrong: "Probabilistic modeling or waiting for logins won't solve the scale problem.",
+    feedbackBody: "Matchbook's IP→MAID pathway uses deterministic Device Derived Data (D3) from 1B+ devices to match website visitor IPs to MAIDs. Once MAIDs are matched, those can be activated across CTV, DSPs, retail media, and social platforms. Only deterministic signals are used — no probabilistic guessing — meaning match quality is high and wasted impressions are minimized.",
+    productDetail: "<strong>Matchbook pathways:</strong> Physical→IP, IP→MAID, MAID→IP, Spatial Index→IP/MAID. Activated across DSPs, retail media networks, walled gardens, social platforms. Powered by 1B+ devices across 250+ countries.",
+    useCaseUnlock: "📺 CTV Audience Extension",
+    statImpact: {identity: "CTV Ready ✅"}
+  },
+  {
+    id: 4,
+    tag: 'netacuity', tagLabel: 'NetAcuity · Connection Intelligence',
+    title: "Mobile vs Desktop Bidding Strategy",
+    addiSpeech: "My CPMs for mobile traffic are the same as desktop but conversion rates are totally different. I feel like I'm flying blind on device context. What do I do?",
+    desc: "Addi manages bids across a DSP for a retail client. She suspects that mobile traffic from carrier connections converts 3x better than WiFi traffic for their app-install campaign, and that home broadband converts better than business networks for a B2C campaign. She needs connection-type signals to inform her bidding logic.",
+    dataViz: [
+      {val:"FC-24", lbl:"Mobile Carrier DB"},
+      {val:"FC-9", lbl:"Home/Biz DB"},
+      {val:"FC-8", lbl:"ISP Database"},
+      {val:"FC-10", lbl:"ASN Database"}
+    ],
+    choices: [
+      {letter:"A", text:"Trust the DSP's built-in device type signal — it already knows if something is mobile.", correct: false},
+      {letter:"B", text:"Use NetAcuity's Mobile Carrier (FC-24) database to identify carrier-connected mobile IPs, and the Home/Business (FC-9) database to segment residential vs. corporate traffic — then build separate bidding tiers.", correct: true},
+      {letter:"C", text:"Run an A/B test for 6 months to let the DSP algorithm self-optimize bid adjustments.", correct: false},
+      {letter:"D", text:"Only bid on IPv6 traffic since it's more modern and likely higher quality.", correct: false}
+    ],
+    correctIdx: 1,
+    feedbackCorrect: "Smart signal stacking! 📶",
+    feedbackWrong: "DSP device signals don't give you carrier-level or home/business context.",
+    feedbackBody: "NetAcuity's Mobile Carrier database (FC-24) identifies the specific carrier (e.g. Verizon, T-Mobile) associated with an IP, inferring mobile device context. The Home/Business database (FC-9) determines if an IP is residential or commercial based on connection type. Combined, Addi can build rich bidding rules: +30% bid adjustment for carrier mobile on app-install campaigns; -20% for corporate IPs on B2C retail.",
+    productDetail: "<strong>Mobile Carrier (FC-24):</strong> Carrier name, MCC, MNC codes. <strong>Home/Biz (FC-9):</strong> 'home' or 'business' classification. <strong>ISP (FC-8):</strong> Parent owner of IP range. <strong>ASN (FC-10):</strong> Autonomous System Number for routing context.",
+    useCaseUnlock: "📶 Connection-Type Bidding",
+    statImpact: {data: "Enriched ✅"}
+  },
+  {
+    id: 5,
+    tag: 'combo', tagLabel: 'NetAcuity + Nodify · VPN Detection',
+    title: "The Geo-Compliance Nightmare",
+    addiSpeech: "My gambling client needs to ONLY show ads in states where online betting is legal. But users are using VPNs to appear like they're in New York when they're actually in Utah. I could lose the license!",
+    desc: "Addi's iGaming client operates in 8 US states with active licenses. Their ad platform must not serve any impressions to users in unlicensed states. Recently, compliance auditors flagged a spike in impressions appearing to come from licensed states but showing anomalous behavior patterns. The suspicion: VPN users masking their true location.",
+    dataViz: [
+      {val:"99.99%", lbl:"Country Accuracy"},
+      {val:"97%+", lbl:"City Accuracy"},
+      {val:"Daily", lbl:"VPN Updates"},
+      {val:"FC-33", lbl:"VPN Proxy DB"}
+    ],
+    choices: [
+      {letter:"A", text:"Trust the IP geolocation without any additional checks — the accuracy is already high enough.", correct: false},
+      {letter:"B", text:"Block all traffic from outside the US entirely, then limit to licensed states.", correct: false},
+      {letter:"C", text:"Layer NetAcuity's precise state/postal geolocation with Nodify's VPN/Proxy detection — flag any IP showing a licensed-state location but flagged as VPN/anonymous proxy, and withhold the impression.", correct: true},
+      {letter:"D", text:"Require all users to complete SMS verification before seeing any ad, adding friction to the experience.", correct: false}
+    ],
+    correctIdx: 2,
+    feedbackCorrect: "Compliance champion! ⚖️",
+    feedbackWrong: "Single-layer approaches leave compliance gaps — you need the combo.",
+    feedbackBody: "This is a perfect NetAcuity + Nodify combo use case. NetAcuity's 99.99% country / 97%+ city accuracy gives you the geo foundation. But VPN users can appear in a licensed state. Nodify catches those masking traffic (Category: VPN, Consumer-Privacy, Darknet). Decision logic: if geo=licensed state AND Nodify=clean → serve ad. If Nodify=VPN/Proxy → withhold. This protects the license while maximizing reach to real licensed-state users.",
+    productDetail: "<strong>VPN Proxy (FC-33)</strong> adds context: entry/exit nodes, VPN provider name, residential flag. <strong>Nodify IPC Score</strong> adds behavioral layer — high score (5) = many devices/locations = likely anonymizer.",
+    useCaseUnlock: "⚖️ iGaming Compliance",
+    statImpact: {fraud: "VPN Aware 🔍", geo: "Compliance ✅"}
+  },
+  {
+    id: 6,
+    tag: 'matchbook', tagLabel: 'Matchbook · Audience Activation',
+    title: "Offline-to-Online Bridge",
+    addiSpeech: "My retail client has 200,000 in-store loyalty customer addresses with lat/long data. But their digital campaigns have ZERO connection to these known, high-value shoppers. There has to be a way to reach them online!",
+    desc: "Addi's retail client has years of in-store purchase data with customer home addresses (geocoded to lat/long). These are proven high-LTV customers. The marketing team wants to serve personalized CTV and display ads to these specific households during an upcoming holiday sale — without using cookies or email-based matching.",
+    dataViz: [
+      {val:"Lat/Long", lbl:"Input Signal"},
+      {val:"→ IP", lbl:"Matchbook Output"},
+      {val:"CTV+", lbl:"Activation Channels"},
+      {val:"Det.", lbl:"Match Methodology"}
+    ],
+    choices: [
+      {letter:"A", text:"Build lookalike audiences based on the customer demographic profile and target broadly — actual customer data can't be used for digital targeting.", correct: false},
+      {letter:"B", text:"Use Matchbook's Physical-to-IP pathway: match lat/long home coordinates to stable IP addresses, enabling targeted CTV and IP-based ad delivery to proven in-store shoppers.", correct: true},
+      {letter:"C", text:"Try to match customers via email hash to walled gardens only — accept the 60% match rate loss.", correct: false},
+      {letter:"D", text:"Wait for cookie deprecation solutions to mature before investing in identity-based targeting strategies.", correct: false}
+    ],
+    correctIdx: 1,
+    feedbackCorrect: "Offline-to-online unlocked! 🏪→📺",
+    feedbackWrong: "Lookalikes and email hashes leave real, known customers unreachable.",
+    feedbackBody: "Matchbook's Physical→IP pathway is purpose-built for this. Addi's client supplies lat/long coordinates (from address geocoding), Matchbook matches those to stable IP addresses observed at those locations using D3 device data from 1B+ devices. Those IPs can then be activated for CTV, display, and other IP-based channels — reaching real, verified, high-LTV shoppers without cookies or email.",
+    productDetail: "<strong>Matchbook Physical→IP:</strong> Lat/Long coordinates → associated IP addresses → CTV/IP-based device activation. Uses deterministic D3 signals. Covers 250+ countries. Can be layered with MAID matching for full cross-device reach.",
+    useCaseUnlock: "🏪 Offline-to-Online",
+    statImpact: {identity: "Offline+Online ✅"}
+  },
+  {
+    id: 7,
+    tag: 'nodify', tagLabel: 'Nodify IPC · Traffic Quality',
+    title: "The Brand Safety Audit",
+    addiSpeech: "My CPG client just got a brand safety report showing their ads appeared next to sketchy content accessed via Tor nodes and darknets. Legal is freaking out. I need to prevent this IMMEDIATELY.",
+    desc: "A major CPG brand's ads were served to IPs associated with darknet-adjacent traffic — identified by a post-campaign audit. The brand's agency needs real-time filtering so that future campaigns never deliver to traffic associated with Tor exit nodes, darknet networks, or other high-risk anonymizing infrastructure, regardless of the publisher or exchange.",
+    dataViz: [
+      {val:"Darknet", lbl:"Block Category"},
+      {val:"Tor Exit", lbl:"Node Type"},
+      {val:"IPC=5", lbl:"High Risk Score"},
+      {val:"Daily", lbl:"Feed Updates"}
+    ],
+    choices: [
+      {letter:"A", text:"Add more premium direct-sold inventory to the media plan — avoid open exchange entirely.", correct: false},
+      {letter:"B", text:"Use Nodify to pre-bid filter: block all impressions from IPs categorized as Darknet, Tor-exit nodes, and high-risk anonymizers at the DSP level using Nodify's daily node delivery file.", correct: true},
+      {letter:"C", text:"Apply contextual brand safety keywords to avoid certain content categories — the placement targeting will solve it.", correct: false},
+      {letter:"D", text:"Use a brand safety vendor that scans page content — they'll catch the problematic inventory.", correct: false}
+    ],
+    correctIdx: 1,
+    feedbackCorrect: "Brand protected! 🛡️✨",
+    feedbackWrong: "Content scanning and premium inventory don't filter by IP origin risk.",
+    feedbackBody: "Brand safety isn't just about page content — it's about WHO is seeing the ad. Darknet and Tor traffic is fundamentally non-brand-safe regardless of the placement. Nodify's daily node file can be integrated into DSP pre-bid filtering to block all impressions where the IP is categorized as Darknet, Tor-exit, or other malicious infrastructure. The IPC composite score adds a behavioral layer: score=5 means the IP shows anomalous multi-device, multi-location behavior.",
+    productDetail: "<strong>Nodify Node Types:</strong> exit, entry, both, tor-exit, tor-relay. <strong>Categories:</strong> Darknet, VPN, Proxy, Hosting. Updated daily. Deploy via flat file, API, or parquet format for pre-bid integration.",
+    useCaseUnlock: "🛡️ Brand Safety",
+    statImpact: {fraud: "Darknet Blocked 🚫"}
+  },
+  {
+    id: 8,
+    tag: 'combo', tagLabel: 'Full Stack · Campaign Intelligence',
+    title: "The Performance Dashboard",
+    addiSpeech: "OK — I've learned so much today! Now I want to build the ultimate campaign intelligence layer. What's the most powerful combination of Digital Element data for a premium programmatic setup?",
+    desc: "Addi is pitching her agency's new 'Premium Intelligence Layer' to a Fortune 500 CPG client. She needs to articulate a complete data strategy that handles: geo-precise targeting, fraud/VPN filtering, identity extension to CTV, and offline audience onboarding — all in a coherent, scalable way.",
+    dataViz: [
+      {val:"3", lbl:"Products"},
+      {val:"20+", lbl:"Databases"},
+      {val:"1B+", lbl:"Devices"},
+      {val:"<0.03ms", lbl:"Latency"}
+    ],
+    choices: [
+      {letter:"A", text:"NetAcuity alone — it's the most accurate geo data, and good geo is all you really need for a premium campaign.", correct: false},
+      {letter:"B", text:"Nodify + Matchbook — fraud filtering plus identity resolution, skip the geo layer since DSPs handle that.", correct: false},
+      {letter:"C", text:"NetAcuity (ZIP+4 geo precision + demographics + Home/Biz) → Nodify IPC (VPN/fraud filter + behavioral scoring) → Matchbook (IP↔MAID↔Physical bridge for CTV + offline activation) as a layered intelligence stack.", correct: true},
+      {letter:"D", text:"Use a single third-party DMP that aggregates all these signals rather than licensing individual databases.", correct: false}
+    ],
+    correctIdx: 2,
+    feedbackCorrect: "Full-stack genius! You've mastered the Digital Element portfolio! 🏆",
+    feedbackWrong: "Each product fills a critical gap the others don't — you need the full stack.",
+    feedbackBody: "The power is in the combination: NetAcuity provides the geo foundation (ZIP+4, DMA, Home/Biz, Demographics, Mobile Carrier) so every impression has precise location and connection context. Nodify IPC filters out fraud, VPN masking, and brand-unsafe traffic before the impression fires. Matchbook then extends that intelligence to CTV, mobile, and offline audiences using deterministic identity matching. Together: maximum reach + maximum quality + minimum waste.",
+    productDetail: "<strong>The Full Stack:</strong> NetAcuity 20+ databases → Nodify daily proxy/VPN filtering → Matchbook deterministic identity. Setup in 20 minutes. 30,000 IP resolutions/sec. 24/7 support. Works via API, flat file, cloud, or embedded.",
+    useCaseUnlock: "🏆 Full Intelligence Stack",
+    statImpact: {geo: "Maximum ✅", fraud: "Complete 🛡️", identity: "Full Stack ✅", data: "20+ DBs ✅"}
+  }
+];
+
+// ══════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════
+let state = {
+  current: 0,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  correct: 0,
+  perfectRounds: 0,
+  answered: false,
+  unlocks: [],
+  stats: {geo:'—', fraud:'—', identity:'—', data:'—'}
+};
+
+function startGame() {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  renderChapterMap();
+  renderScenario();
+}
+
+function restartGame() {
+  state = {current:0,score:0,streak:0,bestStreak:0,correct:0,perfectRounds:0,answered:false,unlocks:[],stats:{geo:'—',fraud:'—',identity:'—',data:'—'}};
+  document.getElementById('results-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  renderChapterMap();
+  renderScenario();
+}
+
+function renderChapterMap() {
+  const map = document.getElementById('chapter-map');
+  map.innerHTML = SCENARIOS.map((s,i) => {
+    let cls = i < state.current ? 'done' : i === state.current ? 'active' : 'locked';
+    return `<div class="chapter-dot ${cls}" title="Scenario ${i+1}">${i < state.current ? '✓' : i+1}</div>`;
+  }).join('');
+}
+
+function renderScenario() {
+  const s = SCENARIOS[state.current];
+  state.answered = false;
+
+  // Update HUD
+  const pct = (state.current / SCENARIOS.length) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `Scenario ${state.current + 1} of ${SCENARIOS.length}`;
+  document.getElementById('score-display').textContent = state.score;
+  document.getElementById('streak-display').textContent = state.streak;
+
+  // Update Addi panel
+  document.getElementById('addi-speech').textContent = s.addiSpeech;
+  document.getElementById('stat-geo').textContent = state.stats.geo;
+  document.getElementById('stat-fraud').textContent = state.stats.fraud;
+  document.getElementById('stat-identity').textContent = state.stats.identity;
+  document.getElementById('stat-data').textContent = state.stats.data;
+
+  // Data viz chips
+  const dvHTML = s.dataViz.map(d => `<div class="data-chip"><span class="val">${d.val}</span><span class="lbl">${d.lbl}</span></div>`).join('');
+
+  // Choices
+  const choicesHTML = s.choices.map((c,i) =>
+    `<button class="choice-btn" id="choice-${i}" onclick="selectChoice(${i})">
+      <div class="choice-letter">${c.letter}</div>
+      <div class="choice-text">${c.text}</div>
+    </button>`
+  ).join('');
+
+  document.getElementById('scenario-container').innerHTML = `
+    <div class="scenario-card">
+      <div class="scenario-tag tag-${s.tag}">${s.tagLabel}</div>
+      <div class="scenario-title">${s.title}</div>
+      <div class="scenario-desc">${s.desc}</div>
+      <div class="data-viz">${dvHTML}</div>
+      <div class="choices">${choicesHTML}</div>
+      <div class="feedback-panel" id="feedback"></div>
+    </div>
+  `;
+}
+
+function selectChoice(idx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const s = SCENARIOS[state.current];
+  const isCorrect = idx === s.correctIdx;
+  const points = isCorrect ? 100 : 0;
+
+  if (isCorrect) {
+    state.score += 100;
+    state.streak++;
+    state.correct++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    // Bonus for streak
+    if (state.streak >= 3) { state.score += 25; }
+    state.unlocks.push(s.useCaseUnlock);
+    // Update stats
+    if (s.statImpact.geo) state.stats.geo = s.statImpact.geo;
+    if (s.statImpact.fraud) state.stats.fraud = s.statImpact.fraud;
+    if (s.statImpact.identity) state.stats.identity = s.statImpact.identity;
+    if (s.statImpact.data) state.stats.data = s.statImpact.data;
+  } else {
+    state.streak = 0;
+  }
+
+  document.getElementById('score-display').textContent = state.score;
+  document.getElementById('streak-display').textContent = state.streak;
+
+  // Style buttons
+  s.choices.forEach((_,i) => {
+    const btn = document.getElementById(`choice-${i}`);
+    if (i === s.correctIdx) {
+      btn.style.background = 'rgba(16,185,129,0.2)';
+      btn.style.borderColor = '#059669';
+      btn.style.color = '#34d399';
+    } else if (i === idx && !isCorrect) {
+      btn.style.background = 'rgba(239,68,68,0.15)';
+      btn.style.borderColor = '#dc2626';
+      btn.style.color = '#f87171';
+    }
+    btn.style.cursor = 'default';
+  });
+
+  // Show feedback
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  fb.className = `feedback-panel ${isCorrect ? 'feedback-correct' : 'feedback-wrong'}`;
+  fb.innerHTML = `
+    <div class="feedback-icon">${isCorrect ? '✅' : '❌'}</div>
+    <div class="feedback-title">${isCorrect ? s.feedbackCorrect : s.feedbackWrong}</div>
+    <div class="feedback-body">${s.feedbackBody}</div>
+    <div class="feedback-product">${s.productDetail}</div>
+    ${isCorrect && state.streak >= 3 ? '<div style="margin-top:8px;font-size:12px;color:#fbbf24;">🔥 +25 Streak Bonus!</div>' : ''}
+    <button class="btn-next" onclick="nextScenario()">${state.current < SCENARIOS.length - 1 ? 'Next Challenge →' : 'See Results 🏆'}</button>
+  `;
+
+  // Update sidebar stats and achievements
+  document.getElementById('stat-geo').textContent = state.stats.geo;
+  document.getElementById('stat-fraud').textContent = state.stats.fraud;
+  document.getElementById('stat-identity').textContent = state.stats.identity;
+  document.getElementById('stat-data').textContent = state.stats.data;
+
+  // Achievements
+  const achMap = {'correct3':'🎯','streak3':'🔥','all_netacuity':'📡','fraud_combo':'🛡️'};
+  let achs = '';
+  if (state.correct >= 3) achs += '<span class="ach" title="3 correct">🎯</span>';
+  if (state.bestStreak >= 3) achs += '<span class="ach" title="3 streak">🔥</span>';
+  if (state.correct >= 6) achs += '<span class="ach" title="6 correct">⭐</span>';
+  if (state.correct >= 8) achs += '<span class="ach" title="Perfect!">🏆</span>';
+  document.getElementById('achievements').innerHTML = achs;
+}
+
+function nextScenario() {
+  state.current++;
+  if (state.current >= SCENARIOS.length) {
+    showResults();
+  } else {
+    renderChapterMap();
+    renderScenario();
+    window.scrollTo(0,0);
+  }
+}
+
+function showResults() {
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'block';
+
+  const pct = state.score / 800;
+  let trophy = '🏆', title = 'Campaign Complete!';
+  if (pct >= 0.9) { trophy = '🏆'; title = 'Digital Element MVP! Addi is impressed!'; }
+  else if (pct >= 0.7) { trophy = '🥈'; title = 'Strong Performance! Addi wants to talk more.'; }
+  else if (pct >= 0.5) { trophy = '🥉'; title = 'Good Start! Addi sees potential.'; }
+  else { trophy = '📚'; title = 'Learning in Progress — Addi suggests a deep-dive session!'; }
+
+  document.getElementById('results-trophy').textContent = trophy;
+  document.getElementById('results-title').textContent = title;
+  document.getElementById('results-score').textContent = state.score;
+  document.getElementById('r-correct').textContent = `${state.correct}/8`;
+  document.getElementById('r-streak').textContent = state.bestStreak;
+  document.getElementById('r-perfect').textContent = Math.floor(state.correct / 8 * 8 === 8 ? 1 : 0);
+
+  const unlockGrid = document.getElementById('unlocks-grid');
+  if (state.unlocks.length === 0) {
+    unlockGrid.innerHTML = '<div style="color:#6080a0;font-size:13px;">Answer correctly to unlock use cases</div>';
+  } else {
+    unlockGrid.innerHTML = state.unlocks.map(u => `<div class="unlock-chip">${u}</div>`).join('');
+  }
+}
+</script>
+</body>
+</html>

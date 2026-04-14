@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zillow Data Breach Exposure Model — Digital Element</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --de-blue: #2B4BA0;
+  --de-blue-dark: #1E3578;
+  --de-blue-light: #EEF2FA;
+  --de-blue-mid: #D4DCF5;
+  --red: #C0392B;
+  --red-bg: #FDF2F2;
+  --red-border: #F5C6C6;
+  --green: #1E8449;
+  --green-bg: #EAF7EE;
+  --green-border: #A9DFBF;
+  --gray-50: #F7F8FC;
+  --gray-100: #EEF0F5;
+  --gray-200: #DDE0EC;
+  --gray-400: #9099B8;
+  --gray-600: #545D80;
+  --gray-900: #14172E;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+/* HEADER */
+.header {
+  background: #fff; border-bottom: 3px solid var(--de-blue);
+  padding: 0 48px; height: 68px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(43,75,160,0.08);
+}
+.logo-svg { height: 32px; width: auto; }
+.header-badge {
+  font-size: 12px; color: var(--gray-400); letter-spacing: 0.06em;
+  text-transform: uppercase; font-weight: 500;
+  border: 1px solid var(--gray-200); padding: 5px 12px; border-radius: 20px;
+}
+
+/* NAV */
+.progress-nav {
+  background: var(--de-blue); padding: 0 48px; display: flex;
+}
+.nav-step {
+  padding: 14px 22px; font-size: 13px; color: rgba(255,255,255,0.45);
+  cursor: pointer; border-bottom: 3px solid transparent;
+  transition: all 0.2s; display: flex; align-items: center; gap: 8px; user-select: none;
+}
+.nav-step:hover { color: rgba(255,255,255,0.75); }
+.nav-step.active { color: #fff; border-bottom-color: #fff; }
+.nav-step.done { color: rgba(255,255,255,0.6); }
+.step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.nav-step.active .step-num { background: #fff; color: var(--de-blue); }
+.nav-step.done .step-num { background: rgba(255,255,255,0.3); color: #fff; }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; }
+.container { max-width: 960px; margin: 0 auto; padding: 40px 32px; }
+
+/* TYPE */
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--de-blue); margin-bottom: 10px; }
+h1 { font-size: 30px; font-weight: 700; color: var(--gray-900); line-height: 1.2; margin-bottom: 10px; letter-spacing: -0.4px; }
+.subtitle { font-size: 15px; color: var(--gray-600); line-height: 1.65; margin-bottom: 28px; max-width: 700px; }
+
+/* SCENARIO SELECTOR — 4 cards */
+.scenario-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+.scenario-card {
+  border: 2px solid var(--gray-200); border-radius: 12px;
+  padding: 20px 16px; cursor: pointer; transition: all 0.2s; background: #fff; text-align: center;
+}
+.scenario-card:hover { border-color: var(--de-blue); box-shadow: 0 4px 20px rgba(43,75,160,0.12); }
+.scenario-card.active { border-color: var(--de-blue); background: var(--de-blue-light); }
+.sc-users { font-size: 28px; font-weight: 800; color: var(--de-blue); margin: 8px 0 4px; letter-spacing: -1px; }
+.sc-label { font-size: 13px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }
+.sc-desc { font-size: 11px; color: var(--gray-600); line-height: 1.5; }
+
+/* TOGGLE */
+.toggle-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--de-blue-light); border: 1px solid var(--de-blue-mid);
+  border-radius: 10px; padding: 12px 18px; margin-bottom: 24px;
+}
+.toggle-label { font-size: 13px; font-weight: 600; color: var(--de-blue); }
+.toggle-desc { font-size: 12px; color: var(--gray-600); margin-left: 4px; }
+.toggle-switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; margin-left: auto; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--de-blue-mid); border-radius: 28px; transition: 0.25s; }
+.toggle-slider:before { position: absolute; content: ""; width: 22px; height: 22px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+.toggle-switch input:checked + .toggle-slider { background: var(--red); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(24px); }
+.mode-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 5px; margin-left: 8px; }
+.mode-min { background: var(--de-blue-light); color: var(--de-blue); }
+.mode-max { background: #FDE8E8; color: #9B1C1C; }
+
+/* STATE TABLE */
+.state-table { width: 100%; border-collapse: collapse; }
+.state-table th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--gray-400); padding: 10px 14px; text-align: left;
+  border-bottom: 2px solid var(--gray-200); background: var(--gray-50);
+}
+.state-table th.right { text-align: right; }
+.state-table td { padding: 11px 14px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; font-size: 13px; }
+.state-table tr:last-child td { border-bottom: none; }
+.state-table tr:hover td { background: var(--de-blue-light); }
+.law-pill {
+  display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px; margin-left: 7px; background: var(--de-blue-light); color: var(--de-blue);
+  text-decoration: none; transition: background 0.15s;
+}
+.law-pill:hover { background: var(--de-blue-mid); color: var(--de-blue-dark); }
+.pri-badge {
+  display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px;
+  border-radius: 4px; margin-left: 5px; background: #EAF7EE; color: #1E6B3A;
+}
+.state-name { font-weight: 600; }
+.penalty-note { font-size: 11px; color: var(--gray-600); }
+.amt-cell { text-align: right; font-weight: 700; }
+.amt-zero { color: var(--gray-400); font-weight: 400; }
+.amt-val { color: var(--red); }
+
+/* SUMMARY ROW */
+.summary-row {
+  background: var(--de-blue-light); border: 1px solid var(--de-blue-mid);
+  border-radius: 10px; padding: 14px 20px; margin: 16px 0;
+  display: flex; align-items: center; gap: 16px;
+}
+.summary-label { font-size: 13px; color: var(--de-blue); font-weight: 600; }
+.summary-value { font-size: 18px; font-weight: 700; color: var(--de-blue); margin-left: auto; }
+
+/* TOTALS SCREEN */
+.totals-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+.total-box {
+  background: #fff; border: 1px solid var(--gray-200);
+  border-radius: 10px; padding: 18px;
+}
+.total-box-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); margin-bottom: 6px; }
+.total-box-value { font-size: 26px; font-weight: 800; color: var(--red); letter-spacing: -0.5px; }
+.total-box-sub { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+/* HERO */
+.exposure-hero {
+  background: var(--red-bg); border: 1.5px solid var(--red-border);
+  border-radius: 14px; padding: 28px 32px; margin: 20px 0;
+}
+.exposure-hero-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red); margin-bottom: 8px; }
+.exposure-hero-number { font-size: 52px; font-weight: 800; color: var(--red); letter-spacing: -1.5px; line-height: 1; margin-bottom: 8px; }
+.exposure-hero-sub { font-size: 13px; color: #9B1C1C; }
+
+/* DE COMPARISON */
+.de-hero {
+  background: var(--green-bg); border: 1.5px solid var(--green-border);
+  border-radius: 14px; padding: 24px 28px; margin: 16px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+}
+.de-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); margin-bottom: 6px; }
+.de-hero-number { font-size: 32px; font-weight: 800; color: var(--green); letter-spacing: -0.5px; }
+.de-hero-right { text-align: right; flex-shrink: 0; }
+.ratio-label { font-size: 12px; color: var(--green); font-weight: 500; margin-bottom: 2px; }
+.ratio-number { font-size: 48px; font-weight: 800; color: var(--green); letter-spacing: -1px; line-height: 1; }
+.ratio-sub { font-size: 12px; color: #1A6B3A; margin-top: 2px; }
+.de-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.de-pill { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; background: #D5EFE0; color: #1A6B3A; border: 1px solid #A9DFBF; }
+
+/* INFO BOX */
+.info-box {
+  background: var(--de-blue-light); border: 1px solid var(--de-blue-mid);
+  border-left: 4px solid var(--de-blue); border-radius: 0 10px 10px 0;
+  padding: 16px 20px; margin-bottom: 20px;
+}
+.info-box-title { font-size: 13px; font-weight: 700; color: var(--de-blue); margin-bottom: 6px; }
+.info-box-body { font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+
+/* CARD */
+.card { background: #fff; border-radius: 12px; border: 1px solid var(--gray-200); padding: 24px; margin-bottom: 16px; }
+
+/* COMPARISON TABLE */
+.comp-table { width: 100%; border-collapse: collapse; }
+.comp-table th {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #fff; background: var(--de-blue); padding: 12px 16px; text-align: right;
+}
+.comp-table th:first-child { text-align: left; border-radius: 8px 0 0 0; }
+.comp-table th:last-child { border-radius: 0 8px 0 0; }
+.comp-table td { padding: 11px 16px; border-bottom: 1px solid var(--gray-200); font-size: 13px; text-align: right; }
+.comp-table td:first-child { text-align: left; font-weight: 600; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:nth-child(even) td { background: var(--gray-50); }
+.comp-table tr:hover td { background: var(--de-blue-light); }
+.comp-total td { font-weight: 800; font-size: 15px; color: var(--red); background: var(--red-bg) !important; border-top: 2px solid var(--red-border); }
+.comp-total td:first-child { color: var(--red); }
+
+/* BTNS */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; font-family: var(--font); }
+.btn-primary { background: var(--de-blue); color: #fff; }
+.btn-primary:hover { background: var(--de-blue-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(43,75,160,0.25); }
+.btn-secondary { background: #fff; color: var(--gray-900); border: 1.5px solid var(--gray-200); }
+.btn-secondary:hover { background: var(--gray-100); }
+.btn-row { display: flex; gap: 12px; margin-top: 28px; align-items: center; flex-wrap: wrap; }
+
+/* DISCLAIMER */
+.disclaimer { font-size: 11px; color: var(--gray-400); line-height: 1.6; padding: 14px 16px; background: var(--gray-50); border-radius: 8px; margin-top: 16px; border: 1px solid var(--gray-200); }
+.divider { border: none; border-top: 1px solid var(--gray-200); margin: 28px 0; }
+
+/* FOOTER */
+.page-footer { background: var(--de-blue); padding: 18px 48px; display: flex; align-items: center; justify-content: space-between; margin-top: 48px; }
+.footer-text { font-size: 12px; color: rgba(255,255,255,0.45); }
+.footer-brand { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85); }
+
+  /* TOOLTIP */
+  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .tooltip-icon {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--de-blue-mid); color: var(--de-blue);
+    font-size: 10px; font-weight: 700; cursor: help;
+    margin-left: 5px; flex-shrink: 0; text-align: center; line-height: 16px;
+  }
+  .tooltip-box {
+    display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%); width: 300px;
+    background: #1A1A2E; color: #fff;
+    font-size: 12px; line-height: 1.6; font-weight: 400;
+    padding: 12px 14px; border-radius: 8px; z-index: 200;
+    pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .tooltip-box strong { color: #A8C4FF; font-weight: 600; }
+  .tooltip-box::after {
+    content: ''; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent; border-top-color: #1A1A2E;
+  }
+  .tooltip-wrap:hover .tooltip-box { display: block; }
+
+  /* VIOLATION SLIDER */
+  .slider-row {
+    background: var(--gray-50); border: 1px solid var(--gray-200);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;
+  }
+  .slider-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .slider-header-label { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+  .slider-header-value {
+    margin-left: auto; font-size: 13px; font-weight: 700;
+    color: var(--de-blue); background: var(--de-blue-light);
+    padding: 2px 10px; border-radius: 20px;
+  }
+  .slider-desc { font-size: 12px; color: var(--gray-600); margin-bottom: 10px; line-height: 1.5; }
+  .slider-track { display: flex; align-items: center; gap: 10px; }
+  .slider-end { font-size: 11px; color: var(--gray-400); white-space: nowrap; }
+  input[type=range].vslider {
+    flex: 1; height: 6px; -webkit-appearance: none;
+    background: var(--de-blue-mid); border-radius: 3px; outline: none; cursor: pointer;
+  }
+  input[type=range].vslider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--de-blue);
+    cursor: pointer; box-shadow: 0 1px 4px rgba(43,75,160,0.3);
+  }
+
+@media (max-width: 720px) {
+  .scenario-grid { grid-template-columns: 1fr 1fr; }
+  .totals-grid { grid-template-columns: 1fr; }
+  .de-hero { flex-direction: column; }
+  .de-hero-right { text-align: left; }
+  .header { padding: 0 20px; }
+  .container { padding: 24px 20px; }
+  .progress-nav { padding: 0 8px; overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <svg class="logo-svg" viewBox="0 0 230 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text y="31" font-family="'Segoe UI', Arial, sans-serif" font-size="26" fill="#2B4BA0">
+      <tspan font-weight="400" letter-spacing="-0.3">digital</tspan><tspan font-weight="700" letter-spacing="-0.3">element</tspan>
+    </text>
+    <g transform="translate(210, 4)">
+      <circle cx="10" cy="10" r="9.5" stroke="#2B4BA0" stroke-width="1.8" fill="none"/>
+      <path d="M10 5 C13 5, 15.5 7.5, 15.5 10 C15.5 13 13 15, 10 15 C7.5 15, 6 13.5, 6 11.5 C6 9.5, 7.5 8.5, 9.5 8.5 C11 8.5, 12 9.5, 12 11 C12 12, 11.5 12.5, 10.5 12.5" stroke="#2B4BA0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <span class="header-badge">Confidential &mdash; Prepared for Zillow</span>
+</div>
+
+<!-- NAV -->
+<div class="progress-nav">
+  <div class="nav-step active" id="nav-1" onclick="goTo('s1')"><div class="step-num">1</div> Select Scenario</div>
+  <div class="nav-step" id="nav-2" onclick="goTo('s2')"><div class="step-num">2</div> State Breakdown</div>
+  <div class="nav-step" id="nav-3" onclick="goTo('s3')"><div class="step-num">3</div> Total Exposure</div>
+</div>
+
+<!-- ===== SCREEN 1: SCENARIO SELECTOR ===== -->
+<div class="screen active" id="s1">
+  <div class="container">
+    <p class="eyebrow">Data breach exposure model</p>
+    <h1>Financial impact of a Zillow user data breach</h1>
+    <p class="subtitle">It only takes one compromised employee credential to open the door. What happens next — how many Zillow users' personal data gets exposed — determines the financial liability. Select a user exposure scenario to model the penalty impact across all 19 active state privacy laws.</p>
+
+    <div class="info-box" style="margin-bottom: 24px;">
+      <div class="info-box-title">The threat vector we're solving for</div>
+      <div class="info-box-body">Zillow's audit logs currently have no reliable way to detect when an employee login IP is geographically impossible — a primary indicator that credentials have been stolen. A single compromised account with broad system access can silently exfiltrate personal data on thousands or millions of users before anyone notices. The question isn't <em>if</em> a credential gets stolen — it's how much exposure occurs before it's caught.</div>
+    </div>
+
+    <p style="font-size: 13px; font-weight: 700; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">How many Zillow users are exposed?</p>
+
+    <div class="scenario-grid">
+      <div class="scenario-card" id="sc-10k" onclick="selectScenario(10000, this)">
+        <div class="sc-label">Scenario 1</div>
+        <div class="sc-users">10K</div>
+        <div class="sc-desc">Limited access account — one compromised credential, narrow data scope</div>
+      </div>
+      <div class="scenario-card" id="sc-50k" onclick="selectScenario(50000, this)">
+        <div class="sc-label">Scenario 2</div>
+        <div class="sc-users">50K</div>
+        <div class="sc-desc">Moderate access — compromised account with regional or product-level data access</div>
+      </div>
+      <div class="scenario-card" id="sc-100k" onclick="selectScenario(100000, this)">
+        <div class="sc-label">Scenario 3</div>
+        <div class="sc-users">100K</div>
+        <div class="sc-desc">Elevated access — engineer or ops account with database-level permissions</div>
+      </div>
+      <div class="scenario-card" id="sc-500k" onclick="selectScenario(500000, this)">
+        <div class="sc-label">Scenario 4</div>
+        <div class="sc-users">500K</div>
+        <div class="sc-desc">Broad access — admin or platform account compromised over weeks undetected</div>
+      </div>
+      <div class="scenario-card" id="sc-1m" onclick="selectScenario(1000000, this)">
+        <div class="sc-label">Scenario 5</div>
+        <div class="sc-users">1M</div>
+        <div class="sc-desc">Wide access — sustained exfiltration from a high-privilege account</div>
+      </div>
+      <div class="scenario-card" id="sc-2m" onclick="selectScenario(2000000, this)">
+        <div class="sc-label">Scenario 6</div>
+        <div class="sc-users">2M</div>
+        <div class="sc-desc">Extended breach — multiple credentials or prolonged undetected access window</div>
+      </div>
+      <div class="scenario-card" id="sc-4m" onclick="selectScenario(4000000, this)">
+        <div class="sc-label">Scenario 7</div>
+        <div class="sc-users">4M</div>
+        <div class="sc-desc">Large-scale — insider threat or coordinated attack over months</div>
+      </div>
+      <div class="scenario-card" id="sc-10m" onclick="selectScenario(10000000, this)">
+        <div class="sc-label">Scenario 8</div>
+        <div class="sc-users">10M</div>
+        <div class="sc-desc">Catastrophic — nation-state actor or ransomware with full system access</div>
+      </div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span class="slider-header-label">AG violation grouping</span>
+        <span class="slider-header-value" id="vg-display">1 violation per 100 users</span>
+      </div>
+      <p class="slider-desc">For states with AG-only enforcement, "per violation" is not defined as "per user" in any statute. This slider controls how conservatively violations are grouped. A higher number = fewer violations = lower AG penalty estimate. Adjust to reflect your own legal assessment.</p>
+      <div class="slider-track">
+        <span class="slider-end">Aggressive<br><span style="font-size:10px;">(1 per 10)</span></span>
+        <input type="range" class="vslider" id="vg-slider" min="10" max="1000" step="10" value="100" oninput="updateVG()">
+        <span class="slider-end">Conservative<br><span style="font-size:10px;">(1 per 1,000)</span></span>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <span class="toggle-label">Fine calculation mode</span>
+        <span class="toggle-desc">— showing</span>
+        <span class="mode-badge mode-min" id="mode-badge">minimum fines</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="max-toggle" onchange="toggleMode()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goTo('s2')" id="next-btn" style="opacity:0.4" disabled>View state breakdown &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 2: STATE BREAKDOWN ===== -->
+<div class="screen" id="s2">
+  <div class="container">
+    <p class="eyebrow">Step 2 &mdash; State breakdown</p>
+    <h1 id="s2-title">Exposure by state</h1>
+    <p class="subtitle" id="s2-sub">One compromised employee credential can expose millions of users. Penalties are calculated across all active state privacy laws, scaled to each state's share of the US population. California is the only state with a consumer private right of action — all others are AG-enforced per-violation.</p>
+
+    <div style="background: var(--de-blue-light); border: 1px solid var(--de-blue-mid); border-left: 4px solid var(--de-blue); border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 20px; font-size: 12px; color: var(--gray-600); line-height: 1.6;">
+      <strong style="color: var(--de-blue);">How user counts are estimated by state:</strong> The number of affected users per state is calculated by multiplying the total scenario user count by each state's share of the US population (US Census 2023). For example, if 1M users are exposed and California represents 11.6% of the US population, the model estimates ~116,000 affected CA users. This assumes Zillow's user base is distributed proportionally to the general US population. In practice, Zillow's users likely skew toward high-activity real estate markets — California, New York, Texas, Florida — meaning actual exposure in those states could be <em>higher</em> than shown here. This model is therefore conservative on state-level distribution.
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="state-table">
+        <thead>
+          <tr>
+            <th style="width:30%;">State / Law</th>
+            <th style="width:35%;">Penalty basis</th>
+            <th class="right" style="width:17%;">Est. users</th>
+            <th class="right" style="width:18%;" id="amt-col-header">Exposure</th>
+          </tr>
+        </thead>
+        <tbody id="state-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="summary-row">
+      <span class="summary-label" id="s2-summary-label">Total state-level exposure (minimum)</span>
+      <span class="summary-value" id="state-total">—</span>
+    </div>
+
+    <div class="disclaimer" id="s2-disclaimer">
+      California ($100–$750/consumer) is the only state with a private right of action. All other states are AG-enforced per-violation. Minimum mode uses $100/user for CA and the lowest AG per-violation rate for other states. Maximum mode uses $750/user for CA and the highest AG per-violation rate. Population shares based on US Census 2023 state populations.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo('s1')">&larr; Back</button>
+      <button class="btn btn-primary" onclick="goTo('s3')">See total exposure &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN 3: TOTAL EXPOSURE ===== -->
+<div class="screen" id="s3">
+  <div class="container">
+    <p class="eyebrow">Step 3 &mdash; Total exposure</p>
+    <h1 id="s3-title">Full financial picture</h1>
+
+    <div class="totals-grid">
+      <div class="total-box">
+        <div class="total-box-label" id="t-consumer-label">Consumer claims (minimum)</div>
+        <div class="total-box-value" id="t-consumer">—</div>
+        <div class="total-box-sub" id="t-consumer-sub">$100/user CA; AG min other states</div>
+      </div>
+      <div class="total-box">
+        <div class="total-box-label">AG civil penalties</div>
+        <div class="total-box-value" id="t-ag">—</div>
+        <div class="total-box-sub" id="t-ag-sub">Per-violation rates across all states</div>
+      </div>
+      <div class="total-box">
+        <div class="total-box-label">
+          Remediation costs
+          <span class="tooltip-wrap">
+            <span class="tooltip-icon">?</span>
+            <span class="tooltip-box">
+              <strong>IBM Cost of a Data Breach Report 2024</strong><br>
+              IBM and Ponemon Institute survey 604 organizations across 17 industries annually. The 2024 global average breach cost was <strong>$4.88M</strong>.<br><br>
+              This model uses <strong>$60/user</strong> (min) and <strong>$120/user</strong> (max) as per-record cost multipliers, with a <strong>$20M floor</strong> reflecting fixed costs (legal counsel, forensics, IT remediation, notification, PR) that apply even to smaller breaches regardless of user count.<br><br>
+              Source: <em>IBM Cost of a Data Breach Report 2024</em>
+            </span>
+          </span>
+        </div>
+        <div class="total-box-value" id="t-remedia">—</div>
+        <div class="total-box-sub" id="t-remedia-sub">Legal, IT, notification, PR (IBM 2024)</div>
+      </div>
+      <div class="total-box">
+        <div class="total-box-label">FTC Section 5 exposure</div>
+        <div class="total-box-value" id="t-ftc">—</div>
+        <div class="total-box-sub" id="t-ftc-sub">$53,088/violation — each day = separate violation (2025 rate)</div>
+      </div>
+    </div>
+
+    <div class="exposure-hero">
+      <div class="exposure-hero-label" id="hero-label">Estimated total exposure — minimum</div>
+      <div class="exposure-hero-number" id="hero-total">—</div>
+      <div class="exposure-hero-sub" id="hero-sub">Based on statutory minimum fines across all 19 active state privacy laws</div>
+    </div>
+
+    <hr class="divider">
+    <p class="eyebrow">All four scenarios side by side</p>
+    <h1 style="font-size:22px; margin-bottom:16px;" id="comp-title">Scenario comparison</h1>
+
+    <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--gray-200);">
+      <table class="comp-table" style="min-width: 700px;">
+        <thead>
+          <tr>
+            <th style="min-width:160px;">Cost component</th>
+            <th>10K</th>
+            <th>50K</th>
+            <th>100K</th>
+            <th>500K</th>
+            <th>1M</th>
+            <th>2M</th>
+            <th>4M</th>
+            <th>10M</th>
+          </tr>
+        </thead>
+        <tbody id="comp-tbody"></tbody>
+      </table>
+    </div>
+
+    <hr class="divider">
+    <p class="eyebrow">The asymmetry</p>
+
+    <div class="de-hero">
+      <div>
+        <div class="de-label">Digital Element — use case expansion</div>
+        <div class="de-hero-number">$80,000 — $100,000 / yr</div>
+        <div class="de-pills">
+          <span class="de-pill">NetAcuity ZIP+4</span>
+          <span class="de-pill">Existing licensed volume</span>
+          <span class="de-pill">No new databases</span>
+          <span class="de-pill">Impossible travel detection</span>
+        </div>
+      </div>
+      <div class="de-hero-right">
+        <div class="ratio-label" id="ratio-label">1M user breach min is</div>
+        <div class="ratio-number" id="ratio-num">—</div>
+        <div class="ratio-sub">the annual license cost</div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top: 16px;">
+      <div class="info-box-title">What DE's use case expansion does</div>
+      <div class="info-box-body">A stolen credential that logs in from an impossible location gets flagged immediately — before any user data leaves the building. The scenarios above show what happens when that signal doesn't exist. Zillow's existing NetAcuity license already covers the volume and databases needed. No new infrastructure, no new databases — just the use case permission to apply existing IP geolocation to employee login monitoring. Current tool in use: GeoLite (free tier, low accuracy). DE provides ZIP+4 resolution, GPS-validated, updated daily.</div>
+    </div>
+
+    <div class="disclaimer">
+      All penalty figures verified from official primary sources, April 2026. California (CCPA/CPRA): consumer damages $107–$799/person, AG fines $2,663–$7,988/violation — 2025 CPI-adjusted per CPPA announcement Dec 17, 2024. Colorado (CPA): $2,000/violation, $500K cap — enforced as deceptive trade practice under CRS 6-1-112 per SB21-190. Virginia (VCDPA): $7,500/violation. Connecticut (CTDPA): $5,000/violation. Texas (TDPSA): $7,500/violation. Florida (FDBR): $50,000/violation ($1B+ revenue threshold; Zillow ~$2.2B qualifies). Oregon (OCPA): $7,500/violation. New York (SHIELD Act): $5,000/violation for safeguards failures; $20/notification capped at $250,000 — per official NY AG website. New Jersey (NJDPA): $10,000 first violation / $20,000 subsequent — under NJ Consumer Fraud Act. Maryland (MODPA): $1,000 first / $5,000 subsequent. All remaining states (MT, MN, DE, NE, NH, RI, IN, KY, TN, UT, IA): $7,500/violation max. FTC: $53,088/violation per Federal Register Jan 17, 2025 (each day of non-compliance = separate violation). Breach notification state penalties (PA, OH, GA, NC, MI, WA, AZ, MA, WI, MO, SC, AL, LA) included per respective state statutes. Remediation: IBM Cost of a Data Breach Report 2024 methodology. Population shares: US Census 2023. This does not constitute legal advice.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo('s2')">&larr; Back</button>
+      <button class="btn btn-secondary" onclick="goTo('s1')">Change scenario</button>
+      <button class="btn btn-primary" onclick="window.print()">&#128438; Print / Save PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="page-footer">
+  <span class="footer-text">Confidential &mdash; prepared for Zillow &bull; April 2026</span>
+  <span class="footer-brand">digitalelement.com</span>
+</div>
+
+<script>
+// ── STATE DATA ─────────────────────────────────────────────────────────────
+// All law URLs point to official government/legislature primary sources
+// CA is the only state with private right of action (per user floor/ceil)
+// All others: AG per-violation — violations = usersInState / violationsPerUser (user-adjustable slider, default 100)
+const states = [
+  { id:'ca', name:'California',    law:'CCPA/CPRA', url:'https://cppa.ca.gov/announcements/2024/20241217.html',                                          popShare:0.1163, floorPer:107,   ceilPer:799,   agMin:2663,  agMax:7988,  privateAction:true,  color:'#1A3A8F', note:'$107–$799/consumer private right of action (2025 CPI-adjusted). AG $2,663 unintentional / $7,988 intentional per violation. <strong>Triggers:</strong> name + email, account credentials, SSN, financial account numbers, geolocation, browsing/search history, passwords. Broadest definition of personal data of any state.' },
+  { id:'tx', name:'Texas',         law:'TDPSA',     url:'https://capitol.texas.gov/tlodocs/88R/billtext/html/HB00004F.htm',                              popShare:0.0878, floorPer:null,  ceilPer:null,  agMin:2500,  agMax:7500,  privateAction:false, color:'#1E3D96', note:'AG-only: $2,500 unintentional / $7,500 intentional per violation. No revenue threshold. <strong>Triggers:</strong> name + email/password, SSN, financial account numbers, biometric data, precise geolocation, health data, racial/ethnic origin.' },
+  { id:'fl', name:'Florida',       law:'FDBR',      url:'https://www.flsenate.gov/Session/Bill/2023/262/BillText/er/PDF',                               popShare:0.0665, floorPer:null,  ceilPer:null,  agMin:10000, agMax:50000, privateAction:false, color:'#2347A3', note:'AG-only: $10,000–$50,000/violation. Applies only to $1B+ revenue businesses — Zillow (~$2.2B) qualifies. <strong>Triggers:</strong> name + email, account credentials, SSN, financial data, biometric data, precise geolocation, health data. Broadest definition includes pseudonymous data.' },
+  { id:'ny', name:'New York',      law:'SHIELD Act',url:'https://ag.ny.gov/resources/organizations/data-breach-reporting/shield-act',                   popShare:0.0578, floorPer:null,  ceilPer:null,  agMin:5000,  agMax:5000,  privateAction:false, color:'#2851B0', note:'AG-only: $5,000/violation for failure to maintain reasonable safeguards (no cap); $20/failed notification capped at $250,000 total. Source: official NY AG website. <strong>Triggers:</strong> name + email/password or security question, SSN, financial account numbers, biometric data, medical info (added Mar 2025), health insurance info (added Mar 2025).' },
+  { id:'pa', name:'Pennsylvania',  law:'Breach Ntf',url:'https://www.legis.state.pa.us/cfdocs/legis/LI/consCheck.cfm?txtType=HTM&ttl=73&div=0&chpt=73', popShare:0.0381, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:3000,  privateAction:false, color:'#2D5BBD', note:'AG-only: up to $3,000/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, financial account numbers, driver\'s license number, account credentials. No comprehensive privacy law yet — notification fines only.' },
+  { id:'il', name:'Illinois',      law:'PIPA',      url:'https://www.ilga.gov/legislation/ilcs/ilcs3.asp?ActID=2702&ChapterID=67',                      popShare:0.0378, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:50000, privateAction:false, color:'#325FC9', note:'AG-only: up to $50,000/violation for willful violations under Personal Information Protection Act. <strong>Triggers:</strong> name + SSN, financial account numbers, medical info, health insurance info, biometric data, username + password, taxpayer ID. One of the broader breach notification definitions.' },
+  { id:'oh', name:'Ohio',          law:'Breach Ntf',url:'https://codes.ohio.gov/ohio-revised-code/section-1347.12',                                      popShare:0.0351, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:2500,  privateAction:false, color:'#3763D6', note:'AG-only: up to $2,500/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials.' },
+  { id:'ga', name:'Georgia',       law:'Breach Ntf',url:'https://law.justia.com/codes/georgia/title-10/chapter-1/article-33/',                          popShare:0.0318, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:2500,  privateAction:false, color:'#3C67D3', note:'AG-only: up to $2,500/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials.' },
+  { id:'nc', name:'North Carolina',law:'Breach Ntf',url:'https://www.ncleg.gov/EnactedLegislation/Statutes/HTML/BySection/Chapter_75/GS_75-65.html',    popShare:0.0312, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:5000,  privateAction:false, color:'#416BD0', note:'AG-only: up to $5,000/violation under Identity Theft Protection Act. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials, digital signatures, biometric data.' },
+  { id:'mi', name:'Michigan',      law:'Breach Ntf',url:'https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-445-72',                                 popShare:0.0298, floorPer:null,  ceilPer:null,  agMin:250,   agMax:750,   privateAction:false, color:'#466FCD', note:'AG-only: $250 first / $750 subsequent violations under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials.' },
+  { id:'nj', name:'New Jersey',    law:'NJDPA',     url:'https://pub.njleg.state.nj.us/Bills/2024/PL24/P2024_381_.HTM',                                 popShare:0.0272, floorPer:null,  ceilPer:null,  agMin:10000, agMax:20000, privateAction:false, color:'#4B73CA', note:'AG-only: $10,000 first violation / $20,000 subsequent violations under NJ Consumer Fraud Act. Effective Jan 2025. <strong>Triggers:</strong> name + SSN, financial account numbers, account credentials, biometric data, geolocation, health data, financial information more broadly — one of the widest sensitive data definitions of any state.' },
+  { id:'va', name:'Virginia',      law:'VCDPA',     url:'https://law.lis.virginia.gov/vacode/title59.1/chapter53/',                                      popShare:0.0259, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#5077C7', note:'AG-only: up to $7,500/violation + injunctive relief. Effective Jan 2023. <strong>Triggers:</strong> name + email/password, SSN, financial account numbers, precise geolocation, health data, racial/ethnic origin, biometric data, sexual orientation.' },
+  { id:'wa', name:'Washington',    law:'Breach Ntf',url:'https://app.leg.wa.gov/rcw/default.aspx?cite=19.255.010',                                       popShare:0.0243, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#5580C4', note:'AG-only: up to $7,500/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials, biometric data, health data.' },
+  { id:'az', name:'Arizona',       law:'Breach Ntf',url:'https://www.azleg.gov/ars/18/00552.htm',                                                        popShare:0.0224, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:10000, privateAction:false, color:'#5A84C1', note:'AG-only: up to $10,000/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, financial account numbers, driver\'s license, account credentials, health/medical info.' },
+  { id:'tn', name:'Tennessee',     law:'TIPA',      url:'https://wapp.capitol.tn.gov/apps/BillInfo/Default.aspx?BillNumber=SB0073&GA=113',               popShare:0.0208, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#5F88BE', note:'AG-only: up to $7,500/violation. Effective Jul 2025. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data, sexual orientation.' },
+  { id:'ma', name:'Massachusetts', law:'Breach Ntf',url:'https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXV/Chapter93H',                          popShare:0.0204, floorPer:null,  ceilPer:null,  agMin:5000,  agMax:5000,  privateAction:false, color:'#648BBB', note:'AG-only: up to $5,000/violation under breach notification statute. Strong AG enforcement history. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials. MA has aggressively enforced notification requirements.' },
+  { id:'in', name:'Indiana',       law:'INCDPA',    url:'https://iga.in.gov/legislative/2023/bills/senate/5/details',                                    popShare:0.0199, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#698FB8', note:'AG-only: up to $7,500/violation + attorney fees. Effective Jan 2026. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data.' },
+  { id:'md', name:'Maryland',      law:'MODPA',     url:'https://mgaleg.maryland.gov/mgawebsite/Legislation/Details/sb0541?ys=2024RS',                   popShare:0.0182, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:5000,  privateAction:false, color:'#6E92B5', note:'AG-only: $1,000 first violation / $5,000 subsequent. Strictest data minimization standard. Effective Oct 2025. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, biometric data. Prohibits sale of sensitive data entirely.' },
+  { id:'mn', name:'Minnesota',     law:'MNDPA',     url:'https://www.revisor.mn.gov/bills/bill.php?b=House&f=HF4&ssn=0&y=2024',                          popShare:0.0170, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#7396B2', note:'AG-only: up to $7,500/violation. Effective Jul 2025. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data, sexual orientation.' },
+  { id:'co', name:'Colorado',      law:'CPA',       url:'https://leg.colorado.gov/bills/sb21-190',                                                       popShare:0.0169, floorPer:null,  ceilPer:null,  agMin:2000,  agMax:2000,  privateAction:false, color:'#7899AF', note:'AG-only: $2,000/violation (enforced as deceptive trade practice under Colorado Consumer Protection Act, CRS 6-1-112); $500,000 total cap for related violations. Effective Jul 2023. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data, sexual orientation.' },
+  { id:'wi', name:'Wisconsin',     law:'Breach Ntf',url:'https://docs.legis.wisconsin.gov/statutes/statutes/134/98',                                     popShare:0.0173, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:2500,  privateAction:false, color:'#7D9CAC', note:'AG-only: up to $2,500/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials.' },
+  { id:'mo', name:'Missouri',      law:'Breach Ntf',url:'https://revisor.mo.gov/main/OneSection.aspx?section=407.1500',                                  popShare:0.0183, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:2500,  privateAction:false, color:'#829FA9', note:'AG-only: up to $2,500/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials.' },
+  { id:'ct', name:'Connecticut',   law:'CTDPA',     url:'https://www.cga.ct.gov/2022/act/Pa/pdf/2022PA-00015-R00SB-00006-PA.PDF',                        popShare:0.0107, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:5000,  privateAction:false, color:'#87A3A6', note:'AG-only: up to $5,000/violation. Cure period expired Jan 2025. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data, sexual orientation.' },
+  { id:'or', name:'Oregon',        law:'OCPA',      url:'https://www.oregonlegislature.gov/bills_laws/ors/ors646A.html',                                 popShare:0.0127, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#8CA6A3', note:'AG-only: up to $7,500/violation. Effective Jul 2024. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data. Bans sale of precise geolocation data.' },
+  { id:'sc', name:'South Carolina',law:'Breach Ntf',url:'https://www.scstatehouse.gov/code/t39c001.php',                                                  popShare:0.0157, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:3000,  privateAction:false, color:'#91AAA0', note:'AG-only: up to $3,000/violation under breach notification statute. <strong>Triggers:</strong> name + SSN, driver\'s license, financial account numbers, account credentials.' },
+  { id:'al', name:'Alabama',       law:'Breach Ntf',url:'https://arc.alabama.gov/Laws/GetFile.aspx?file=ACT2018-396.pdf',                                popShare:0.0148, floorPer:null,  ceilPer:null,  agMin:2000,  agMax:500000,privateAction:false, color:'#96AD9D', note:'AG-only: up to $500,000 total per breach event under breach notification statute. <strong>Triggers:</strong> name + SSN, financial account numbers, driver\'s license, account credentials, biometric data.' },
+  { id:'la', name:'Louisiana',     law:'Breach Ntf',url:'https://www.legis.la.gov/legis/Law.aspx?d=323528',                                              popShare:0.0137, floorPer:null,  ceilPer:null,  agMin:5000,  agMax:500000,privateAction:false, color:'#9BB19A', note:'AG-only: up to $500,000 total per breach event. <strong>Triggers:</strong> name + SSN, financial account numbers, driver\'s license, account credentials.' },
+  { id:'ky', name:'Kentucky',      law:'KCDPA',     url:'https://apps.legislature.ky.gov/record/24rs/hb15.html',                                         popShare:0.0132, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#A0B497', note:'AG-only: up to $7,500/violation. Effective Jan 2026. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data.' },
+  { id:'de', name:'Delaware',      law:'DPDPA',     url:'https://legis.delaware.gov/BillDetail?LegislationId=140388',                                    popShare:0.0030, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:10000, privateAction:false, color:'#A5B894', note:'AG-only: up to $10,000/violation. Effective Jan 2025. Strongest minor protections of any state. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, biometric data. Requires opt-in consent for minors under 17.' },
+  { id:'ne', name:'Nebraska',      law:'NDPA',      url:'https://nebraskalegislature.gov/bills/view_bill.php?DocumentID=54400',                          popShare:0.0058, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#AABC91', note:'AG-only: up to $7,500/violation. No revenue/volume threshold — broadest applicability of any state. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data.' },
+  { id:'mt', name:'Montana',       law:'MCDPA',     url:'https://leg.mt.gov/bills/2023/billpdf/SB0384.pdf',                                              popShare:0.0033, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#AFBF8E', note:'AG-only: up to $7,500/violation. Effective Oct 2024. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data.' },
+  { id:'ri', name:'Rhode Island',  law:'RIDTPPA',   url:'https://webserver.rilegislature.gov/BillText/BillText24/HouseText24/H7787A.pdf',                popShare:0.0032, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:10000, privateAction:false, color:'#B4C38B', note:'AG-only: up to $10,000/violation. No cure period. Effective Jan 2026. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, biometric data. Unique requirement to name specific third parties data is shared with.' },
+  { id:'nh', name:'New Hampshire', law:'NHPA',      url:'https://www.gencourt.state.nh.us/legislation/2024/SB0255.html',                                 popShare:0.0040, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#B9C788', note:'AG-only: up to $7,500/violation. Effective Jan 2025. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data.' },
+  { id:'ut', name:'Utah',          law:'UCPA',      url:'https://le.utah.gov/~2022/bills/static/SB0227.html',                                            popShare:0.0098, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#BECB85', note:'AG-only: up to $7,500/violation. Most business-friendly state law. <strong>Triggers:</strong> name + email/password, SSN, financial data, precise geolocation, health data, racial/ethnic origin, biometric data.' },
+  { id:'ia', name:'Iowa',          law:'ICDPA',     url:'https://www.legis.iowa.gov/legislation/BillBook?ga=90&ba=SF%20262',                             popShare:0.0094, floorPer:null,  ceilPer:null,  agMin:1000,  agMax:7500,  privateAction:false, color:'#C3CE82', note:'AG-only: up to $7,500/violation. Weakest consumer protections — no right to correct data. <strong>Triggers:</strong> name + SSN, financial account numbers, driver\'s license, account credentials.' },
+];
+
+const SCENARIOS = [10000, 50000, 100000, 500000, 1000000, 2000000, 4000000, 10000000];
+let currentUsers = null;
+let isMax = false;
+let violationsPerUser = 100; // default: 1 violation per 100 users
+
+function updateVG() {
+  violationsPerUser = parseInt(document.getElementById('vg-slider').value);
+  document.getElementById('vg-display').textContent = `1 violation per ${violationsPerUser.toLocaleString()} users`;
+  // Refresh live if already on breakdown or totals screen
+  if (document.getElementById('s2').classList.contains('active')) buildStateTable();
+  if (document.getElementById('s3').classList.contains('active')) buildTotals();
+}
+
+function fmt(n) {
+  if (!n || n === 0) return '—';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + Math.round(n/1e3).toLocaleString() + 'K';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function fmtN(n) {
+  if (!n) return '0';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return Math.round(n).toLocaleString();
+}
+
+// Calculate exposure for a given state and total user count
+function calcStateExposure(state, totalUsers, max) {
+  const usersInState = Math.round(totalUsers * state.popShare);
+  let exposure = 0;
+  if (state.privateAction) {
+    // CA: per-user calculation
+    exposure = usersInState * (max ? state.ceilPer : state.floorPer);
+  } else {
+    // AG per-violation — "per violation" is not defined as "per user" in any statute
+    // Uses the user-controlled violationsPerUser ratio (default 1 per 100, slider adjustable)
+    const violations = Math.max(1, Math.round(usersInState / violationsPerUser));
+    exposure = violations * (max ? state.agMax : state.agMin);
+  }
+  return { usersInState, exposure };
+}
+
+function calcAllStates(totalUsers, max) {
+  let total = 0;
+  const rows = states.map(s => {
+    const { usersInState, exposure } = calcStateExposure(s, totalUsers, max);
+    total += exposure;
+    return { ...s, usersInState, exposure };
+  });
+  return { rows, total };
+}
+
+function selectScenario(users, el) {
+  currentUsers = users;
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const btn = document.getElementById('next-btn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+}
+
+function toggleMode() {
+  isMax = document.getElementById('max-toggle').checked;
+  const badge = document.getElementById('mode-badge');
+  badge.textContent = isMax ? 'maximum fines' : 'minimum fines';
+  badge.className = isMax ? 'mode-badge mode-max' : 'mode-badge mode-min';
+  if (document.getElementById('s2').classList.contains('active')) buildStateTable();
+  if (document.getElementById('s3').classList.contains('active')) buildTotals();
+}
+
+function buildStateTable() {
+  if (!currentUsers) return;
+  const { rows, total } = calcAllStates(currentUsers, isMax);
+  const modeLabel = isMax ? 'Maximum' : 'Minimum';
+
+  document.getElementById('s2-title').textContent = `Exposure by state — ${fmtN(currentUsers)} logged-in users (${modeLabel})`;
+  document.getElementById('amt-col-header').textContent = modeLabel + ' exposure';
+  document.getElementById('s2-summary-label').textContent = `Total state-level exposure (${modeLabel.toLowerCase()})`;
+  document.getElementById('state-total').textContent = fmt(total);
+
+  let html = '';
+  rows.forEach(r => {
+    const amtClass = r.exposure > 0 ? 'amt-cell amt-val' : 'amt-cell amt-zero';
+    const pri = r.privateAction ? '<span class="pri-badge">Private right</span>' : '';
+    html += `<tr>
+      <td><span class="state-name">${r.name}</span><a href="${r.url}" target="_blank" rel="noopener" class="law-pill" title="View official law source">${r.law} ↗</a>${pri}</td>
+      <td><span class="penalty-note">${r.note}</span></td>
+      <td style="text-align:right; font-weight:600;">${fmtN(r.usersInState)}</td>
+      <td class="${amtClass}">${fmt(r.exposure)}</td>
+    </tr>`;
+  });
+  document.getElementById('state-tbody').innerHTML = html;
+}
+
+function buildTotals() {
+  if (!currentUsers) return;
+  const max = isMax;
+  const { total: stateTotal } = calcAllStates(currentUsers, max);
+  const remLow = Math.max(20e6, currentUsers * 60);
+  const remHigh = Math.max(35e6, currentUsers * 120);
+  const remDisplay = max ? fmt(remHigh) : fmt(remLow);
+  const ftcRate = 53088;
+  const ftcDays = max ? 90 : 30;
+  const ftcExposure = ftcRate * ftcDays;
+  const rem = max ? remHigh : remLow;
+  const grandTotal = stateTotal + rem + ftcExposure;
+  const modeLabel = max ? 'maximum' : 'minimum';
+
+  // Approx AG-only portion vs CA consumer claims
+  const caState = states.find(s => s.id === 'ca');
+  const caUsers = Math.round(currentUsers * caState.popShare);
+  const consumerClaims = caUsers * (max ? caState.ceilPer : caState.floorPer);
+  const agPenalties = stateTotal - consumerClaims;
+
+  document.getElementById('s3-title').textContent = `Total exposure — ${fmtN(currentUsers)} logged-in users (${max ? 'maximum' : 'minimum'} fines)`;
+  document.getElementById('t-consumer-label').textContent = `CA consumer claims (${max ? 'max' : 'min'})`;
+  document.getElementById('t-consumer').textContent = fmt(consumerClaims);
+  document.getElementById('t-consumer-sub').textContent = max ? `$799/user × ${fmtN(caUsers)} CA users (2025 rate)` : `$107/user × ${fmtN(caUsers)} CA users (2025 rate)`;
+  document.getElementById('t-ag').textContent = fmt(agPenalties);
+  document.getElementById('t-ag-sub').textContent = max ? 'Max per-violation rates, all 34 states' : 'Min per-violation rates, all 34 states';
+  document.getElementById('t-remedia').textContent = remDisplay;
+  document.getElementById('t-ftc').textContent = fmt(ftcExposure);
+  document.getElementById('t-ftc-sub').textContent = `$53,088 × ${ftcDays} days of non-compliance`;
+  document.getElementById('hero-label').textContent = `Estimated total exposure (${modeLabel}) — ${fmtN(currentUsers)} logged-in users`;
+  document.getElementById('hero-total').textContent = fmt(grandTotal);
+  document.getElementById('hero-sub').textContent = max
+    ? 'Worst-case scenario — intentional violation findings, maximum AG penalties, extended remediation'
+    : 'Conservative estimate — statutory minimums, early cure period, baseline remediation';
+
+  // Build comparison table
+  buildCompTable(max);
+
+  // Ratio vs DE license
+  const ratio = Math.round(grandTotal / 90000);
+  const smallScenarioTotal = (() => {
+    const { total: t } = calcAllStates(1000000, max);
+    const r = Math.max(20e6, 1000000 * 60);
+    return t + r + ftcExposure;
+  })();
+  const smallRatio = Math.round(smallScenarioTotal / 90000);
+  document.getElementById('ratio-label').textContent = `${fmtN(currentUsers)} user breach (${modeLabel}) is`;
+  document.getElementById('ratio-num').textContent = ratio.toLocaleString() + 'x';
+}
+
+function buildCompTable(max) {
+  const rows = [
+    { label: 'CA consumer claims', fn: (u, mx) => { const s = states.find(x=>x.id==='ca'); const cu = Math.round(u*s.popShare); return cu*(mx?s.ceilPer:s.floorPer); } },
+    { label: 'AG penalties (all states)', fn: (u, mx) => { const {total: t} = calcAllStates(u,mx); const s=states.find(x=>x.id==='ca'); const cu=Math.round(u*s.popShare); return t - cu*(mx?s.ceilPer:s.floorPer); } },
+    { label: 'FTC Section 5', fn: (u, mx) => 53088 * (mx?90:30) },
+    { label: 'Remediation (IBM avg)', fn: (u, mx) => mx ? Math.max(35e6,u*120) : Math.max(20e6,u*60) },
+  ];
+
+  let html = '';
+  rows.forEach(r => {
+    html += `<tr><td>${r.label}</td>`;
+    SCENARIOS.forEach(u => { html += `<td>${fmt(r.fn(u, max))}</td>`; });
+    html += '</tr>';
+  });
+
+  // Totals row
+  html += '<tr class="comp-total"><td>Total estimated exposure</td>';
+  SCENARIOS.forEach(u => {
+    const {total:st} = calcAllStates(u,max);
+    const rem = max ? Math.max(35e6,u*120) : Math.max(20e6,u*60);
+    const ftc = 53088*(max?90:30);
+    html += `<td>${fmt(st+rem+ftc)}</td>`;
+  });
+  html += '</tr>';
+
+  // DE license row
+  html += '<tr style="background:#EAF7EE;"><td style="color:#1E6B3A; font-weight:700;">DE license cost / yr</td>';
+  SCENARIOS.forEach(() => { html += '<td style="color:#1E6B3A; font-weight:700;">$80K–$100K</td>'; });
+  html += '</tr>';
+
+  document.getElementById('comp-tbody').innerHTML = html;
+  document.getElementById('comp-title').textContent = `All scenarios — ${max ? 'maximum' : 'minimum'} fines`;
+}
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-step').forEach((n, i) => {
+    n.classList.remove('active','done');
+    const num = parseInt(id.replace('s',''));
+    if (i+1===num) n.classList.add('active');
+    else if (i+1<num) n.classList.add('done');
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (id==='s2') buildStateTable();
+  if (id==='s3') buildTotals();
+}
+</script>
+</body>
+</html>
